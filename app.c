@@ -36,6 +36,7 @@
 // happy.
 int main(int argc, char **argv) {
 	mpz_array s, p, out;
+	mpz_pool pool;
 	size_t count, i;
 	int c, vflg = 0, sflg = 0, rflg = 0, errflg = 0, r = 0;
 	char *filename = "primes.lst";
@@ -91,6 +92,7 @@ int main(int argc, char **argv) {
 	// Load the keys.
 	array_init(&s, 10);
 	count = array_of_file(&s, filename);
+	pool_init(&pool, count);
 	if (count == 0) {
 		fprintf(stderr, "Can't load %s\n", filename);
 		return 1;
@@ -111,7 +113,7 @@ int main(int argc, char **argv) {
 
 	// Computing a coprime base for a finite set [Algorithm 18.1](copri.html#computing-a-coprime-base-for-a-finite-set).
 	array_init(&p, 10);
-	array_cb(&p, &s);
+	array_cb(&pool, &p, &s);
 
 	// Check if we have found more coprime bases.
 	if (p.used == s.used) {
@@ -124,7 +126,7 @@ int main(int argc, char **argv) {
 		if (sflg == 0) {
 			array_init(&out, 9);
 			// Use [Algorithm 21.2](copri.html#factoring-a-set-over-a-coprime-base) to find the coprimes in the coprime base.
-			array_find_factors(&out, &s, &p);
+			array_find_factors(&pool, &out, &s, &p);
 
 			// Output the factors.
 			if (out.used > 0) {

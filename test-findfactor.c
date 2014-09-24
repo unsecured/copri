@@ -17,7 +17,9 @@ int tests_failed = 0;
 static char * test() {
 	mpz_array in, out;
 	mpz_t b;
+	mpz_pool pool;
 
+	pool_init(&pool, 0);
 	array_init(&in, 10);
 	array_init(&out, 3);
 
@@ -42,13 +44,14 @@ static char * test() {
 	mpz_set_str(b, "627401", 0);
 
 	printf("\nout:\n");
-	array_find_factor(&out, b, &in);
+	array_find_factor(&pool, &out, b, &in);
 
 	array_print(&out);
 
 	array_clear(&out);
 	array_clear(&in);
 	mpz_clear(b);
+	pool_clear(&pool);
 
 	return 0;
 }

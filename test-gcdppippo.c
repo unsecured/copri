@@ -27,6 +27,9 @@ static char * test_gcd_ppi_ppo(char * str_a, char * str_b, char * str_expect_gcd
 	mpz_t expect_ppi;
 	mpz_t expect_ppo;
 
+	mpz_pool pool;
+
+	pool_init(&pool, 0);
 	mpz_init_set_str(a, str_a, 10);
 	mpz_init_set_str(b, str_b, 10);
 	mpz_init_set(a0, a);
@@ -40,7 +43,7 @@ static char * test_gcd_ppi_ppo(char * str_a, char * str_b, char * str_expect_gcd
 	mpz_init_set_str(expect_ppi, str_expect_ppi, 10);
 	mpz_init_set_str(expect_ppo, str_expect_ppo, 10);
 
-	gcd_ppi_ppo(gcd, ppi, ppo, a, b);
+	gcd_ppi_ppo(&pool, gcd, ppi, ppo, a, b);
 
 	// Check the return values.
 	if (mpz_cmp(expect_gcd, gcd) != 0) {
@@ -69,6 +72,7 @@ static char * test_gcd_ppi_ppo(char * str_a, char * str_b, char * str_expect_gcd
 	mpz_clear(expect_gcd);
 	mpz_clear(expect_ppi);
 	mpz_clear(expect_ppo);
+	pool_clear(&pool);
 
 	return 0;
 }

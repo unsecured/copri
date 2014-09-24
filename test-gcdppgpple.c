@@ -27,6 +27,9 @@ static char * test_gcd_ppg_pple(char * str_a, char * str_b, char * str_expect_gc
 	mpz_t expect_ppg;
 	mpz_t expect_pple;
 
+	mpz_pool pool;
+
+	pool_init(&pool, 0);
 	mpz_init_set_str(a, str_a, 10);
 	mpz_init_set_str(b, str_b, 10);
 	mpz_init_set(a0, a);
@@ -40,7 +43,7 @@ static char * test_gcd_ppg_pple(char * str_a, char * str_b, char * str_expect_gc
 	mpz_init_set_str(expect_ppg, str_expect_ppg, 10);
 	mpz_init_set_str(expect_pple, str_expect_pple, 10);
 
-	gcd_ppg_pple(gcd, ppg, pple, a, b);
+	gcd_ppg_pple(&pool, gcd, ppg, pple, a, b);
 
 	// Check the return values.
 
@@ -73,6 +76,7 @@ static char * test_gcd_ppg_pple(char * str_a, char * str_b, char * str_expect_gc
 	mpz_clear(expect_gcd);
 	mpz_clear(expect_ppg);
 	mpz_clear(expect_pple);
+	pool_clear(&pool);
 
 	return 0;
 }

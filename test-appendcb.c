@@ -20,7 +20,9 @@ static char * test_multiple() {
 	mpz_t b;
 	mpz_array array1;
 	mpz_array array2;
+	mpz_pool pool;
 
+	pool_init(&pool, 0);
 	array_init(&array1, 3);
 	array_init(&array2, 3);
 
@@ -31,12 +33,12 @@ static char * test_multiple() {
 	mpz_init_set_str(b, "114757289509", 10);
 
 	printf("\n\nappend_cb(a, b)\n");
-	append_cb(&array1, a, b);
+	append_cb(&pool, &array1, a, b);
 	array_print(&array1);
 	printf("\n");
 
 	printf("\n\nappend_cb(b, a)\n");
-	append_cb(&array2, b, a);
+	append_cb(&pool, &array2, b, a);
 	array_print(&array2);
 	printf("\n");
 
@@ -48,6 +50,7 @@ static char * test_multiple() {
 	mpz_clear(b);
 	array_clear(&array1);
 	array_clear(&array2);
+	pool_clear(&pool);
 
 	return 0;
 }
@@ -59,7 +62,9 @@ static char * test_single() {
 	mpz_t b;
 	mpz_array array1;
 	mpz_array array2;
+	mpz_pool pool;
 
+	pool_init(&pool, 0);
 	array_init(&array1, 3);
 	array_init(&array2, 3);
 
@@ -70,7 +75,7 @@ static char * test_single() {
 	mpz_init_set_str(b, "627401", 10);
 
 	printf("\n\nappend_cb(a, b)\n");
-	append_cb(&array1, a, b);
+	append_cb(&pool, &array1, a, b);
 	if (mpz_cmp_ui(a, 419479) != 0) {
 		return "append_cb has changed the input value a!";
 	}
@@ -81,7 +86,7 @@ static char * test_single() {
 	printf("\n");
 
 	printf("\n\nappend_cb(b, a)\n");
-	append_cb(&array2, b, a);
+	append_cb(&pool, &array2, b, a);
 	if (mpz_cmp_ui(a, 419479) != 0) {
 		return "append_cb has changed the input value a!";
 	}
@@ -95,6 +100,7 @@ static char * test_single() {
 	mpz_clear(b);
 	array_clear(&array1);
 	array_clear(&array2);
+	pool_clear(&pool);
 
 	return 0;
 }

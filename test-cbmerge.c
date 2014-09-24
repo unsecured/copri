@@ -20,7 +20,9 @@ static char * test() {
 	mpz_array in2;
 	mpz_array out;
 	mpz_t b;
+	mpz_pool pool;
 
+	pool_init(&pool, 0);
 	array_init(&in1, 10);
 	array_init(&in2, 10);
 	array_init(&out, 3);
@@ -49,7 +51,7 @@ static char * test() {
 	printf("\nin2:\n");
 	array_print(&in2);
 
-	cbmerge(&out, &in1, &in2);
+	cbmerge(&pool, &out, &in1, &in2);
 
 	printf("\nout:\n");
 	array_print(&out);
@@ -58,6 +60,7 @@ static char * test() {
 	array_clear(&in2);
 	array_clear(&out);
 	mpz_clear(b);
+	pool_clear(&pool);
 
 	return 0;
 }

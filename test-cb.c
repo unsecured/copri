@@ -19,7 +19,9 @@ static char * test() {
 	mpz_array in;
 	mpz_array out;
 	mpz_t b;
+	mpz_pool pool;
 
+	pool_init(&pool, 0);
 	array_init(&in, 10);
 	array_init(&out, 3);
 
@@ -35,7 +37,7 @@ static char * test() {
 	printf("\nin1:\n");
 	array_print(&in);
 
-	array_cb(&out, &in);
+	array_cb(&pool, &out, &in);
 
 	printf("\nout:\n");
 	array_print(&out);
@@ -43,6 +45,7 @@ static char * test() {
 	mpz_clear(b);
 	array_clear(&in);
 	array_clear(&out);
+	pool_clear(&pool);
 
 	return 0;
 }

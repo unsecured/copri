@@ -21,6 +21,9 @@ static char * test_factorial(size_t size, char * expect) {
 	mpz_t e;
 	mpz_t *arr;
 	size_t g;
+	mpz_pool pool;
+
+	pool_init(&pool, 0);
 	
 	// Initialize `p` and `e`.
 	mpz_init(p);
@@ -38,7 +41,7 @@ static char * test_factorial(size_t size, char * expect) {
 	}
 	
 	// Calculate the product of the array.
-	prod(p, arr, 0, size-1);
+	prod(&pool, p, arr, 0, size-1);
 	
 	// Check the return value.
 	if (mpz_cmp(p, e) != 0) {
@@ -58,6 +61,7 @@ static char * test_factorial(size_t size, char * expect) {
 		mpz_clear(arr[g]);
 	}
 	free(arr);
+	pool_clear(&pool);
 
 	return 0;
 }
@@ -69,7 +73,10 @@ static char * test_array_prod() {
 	mpz_t e;
 	mpz_t r;
 	size_t g;
-	
+	mpz_pool pool;
+
+	pool_init(&pool, 0);
+
 	// Initialize `r` and `p`.
 	mpz_init(r);
 	mpz_init(p);
@@ -85,7 +92,7 @@ static char * test_array_prod() {
 	}
 	
 	// Calculate the product of the array.
-	array_prod(&a, r);
+	array_prod(&pool, &a, r);
 	
 	// Check the return value.
 	if (mpz_cmp(r, e) != 0) {
@@ -103,6 +110,7 @@ static char * test_array_prod() {
 	mpz_clear(p);
 	mpz_clear(e);
 	mpz_clear(r);
+	pool_clear(&pool);
 	
 	return 0;
 }

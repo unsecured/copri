@@ -5,6 +5,7 @@
 
 ./test-array
 ./test-arrayio
+./test-pool
 ./test-twopower
 ./test-prod
 ./test-gcdppippo

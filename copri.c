@@ -45,16 +45,16 @@ void two_power(mpz_t rot, unsigned long long n) {
 // Algorithm 11.3 [PDF page 14](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [gcdppippo test](test-gcdppippo.html) for basic usage.
-void gcd_ppi_ppo(mpz_t gcd, mpz_t ppi, mpz_t ppo, const mpz_t a, const mpz_t b) {
+void gcd_ppi_ppo(mpz_pool *pool, mpz_t gcd, mpz_t ppi, mpz_t ppo, const mpz_t a, const mpz_t b) {
 	mpz_t g;
-	mpz_init(g);
+	pool_pop(pool, g);
 	mpz_gcd(ppi, a, b);
 	mpz_set(gcd, ppi);
 	mpz_fdiv_q(ppo, a, ppi);
 	while(1) {
 		mpz_gcd(g, ppi, ppo);
 		if (mpz_cmp_ui(g, 1) == 0) {
-			mpz_clear(g);
+			pool_push(pool, g);
 			return;
 		}
 		mpz_mul(ppi, ppi, g);
@@ -65,22 +65,22 @@ void gcd_ppi_ppo(mpz_t gcd, mpz_t ppi, mpz_t ppo, const mpz_t a, const mpz_t b) 
 // #### Shortcuts
 
 // Compute ppi and ppo. Ingore gcd.
-void ppi_ppo(mpz_t ppi, mpz_t ppo, const mpz_t a, const mpz_t c) {
+void ppi_ppo(mpz_pool *pool, mpz_t ppi, mpz_t ppo, const mpz_t a, const mpz_t c) {
 	mpz_t gcd;
-	mpz_init(gcd);
-	gcd_ppi_ppo(gcd, ppi, ppo, a, c);
-	mpz_clear(gcd);
+	pool_pop(pool, gcd);
+	gcd_ppi_ppo(pool, gcd, ppi, ppo, a, c);
+	pool_push(pool, gcd);
 }
 
 // Compute ppi. Ingore gcd and ppo.
-void ppi(mpz_t ppi, const mpz_t a, const mpz_t c) {
+void ppi(mpz_pool *pool, mpz_t ppi, const mpz_t a, const mpz_t c) {
 	mpz_t gcd;
 	mpz_t ppo;
-	mpz_init(gcd);
-	mpz_init(ppo);
-	gcd_ppi_ppo(gcd, ppi, ppo, a, c);
-	mpz_clear(gcd);
-	mpz_clear(ppo);
+	pool_pop(pool, gcd);
+	pool_pop(pool, ppo);
+	gcd_ppi_ppo(pool, gcd, ppi, ppo, a, c);
+	pool_push(pool, gcd);
+	pool_push(pool, ppo);
 }
 
 // ### Compute gcd, ppg and pple
@@ -94,16 +94,16 @@ void ppi(mpz_t ppi, const mpz_t a, const mpz_t c) {
 // Algorithm 11.4 [PDF page 14](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [gcdppgpple test](test-gcdppgpple.html) for basic usage.
-void gcd_ppg_pple(mpz_t gcd, mpz_t ppg, mpz_t pple, const mpz_t a, const mpz_t b) {
+void gcd_ppg_pple(mpz_pool *pool, mpz_t gcd, mpz_t ppg, mpz_t pple, const mpz_t a, const mpz_t b) {
 	mpz_t g;
-	mpz_init(g);
+	pool_pop(pool, g);
 	mpz_gcd(pple, a, b);
 	mpz_set(gcd, pple);
 	mpz_fdiv_q(ppg, a, pple);
 	while(1) {
 		mpz_gcd(g, ppg, pple);
 		if (mpz_cmp_ui(g, 1) == 0) {
-			mpz_clear(g);
+			pool_push(pool, g);
 			return;
 		}
 		mpz_mul(ppg, ppg, g);
@@ -116,7 +116,7 @@ void gcd_ppg_pple(mpz_t gcd, mpz_t ppg, mpz_t pple, const mpz_t a, const mpz_t b
 // Algorithm 13.2 [PDF page 17](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [appendcb test](test-appendcb.html) for basic usage.
-void append_cb(mpz_array *out, const mpz_t a, const mpz_t b) {
+void append_cb(mpz_pool *pool, mpz_array *out, const mpz_t a, const mpz_t b) {
 
 	mpz_t r, g, h, c, c0, x, y, d, b1, b2, a1;
 	unsigned long long n;
@@ -134,15 +134,15 @@ void append_cb(mpz_array *out, const mpz_t a, const mpz_t b) {
 		return;
 	}
 
-	mpz_init(r);
-	mpz_init(g);
-	mpz_init(a1);
+	pool_pop(pool, r);
+	pool_pop(pool, g);
+	pool_pop(pool, a1);
 
 	// **Step 2**
 	//
 	// Store ppi in `a1` and ppo in `r`. Use `a1` and not `a` to keep the input `const`
 	// and handle the case that one parameter is used twice.
-	ppi_ppo(a1, r, a, b);
+	ppi_ppo(pool, a1, r, a, b);
 
 	// **Step 3**
 	//
@@ -151,29 +151,31 @@ void append_cb(mpz_array *out, const mpz_t a, const mpz_t b) {
 		array_add(out, r);
 	}
 
-	mpz_init(h);
-	mpz_init(c);
+	pool_pop(pool, h);
+	pool_pop(pool, c);
 
 	// **Step 4**
 	//
 	// Caluclate the gcd, ppg and pple.
-	gcd_ppg_pple(g, h, c, a1, b);
+	gcd_ppg_pple(pool, g, h, c, a1, b);
 
 	// **Step 5**
 	//
 	// Store pple in `c0` and `x`.
-	mpz_init_set(c0, c);
-	mpz_init_set(x, c0);
+	pool_pop(pool, c0);
+	mpz_set(c0, c);
+	pool_pop(pool, x);
+	mpz_set(x, c0);
 
 	// **Step 6**
 	//
 	// Set `n` to one.
 	n = 1;
 
-	mpz_init(b1);
-	mpz_init(b2);
-	mpz_init(d);
-	mpz_init(y);
+	pool_pop(pool, b1);
+	pool_pop(pool, b2);
+	pool_pop(pool, d);
+	pool_pop(pool, y);
 
 	// Start while loop to be able to return to step 7.
 	while(1) {
@@ -182,7 +184,7 @@ void append_cb(mpz_array *out, const mpz_t a, const mpz_t b) {
 		// Compute (g, h, c) ← (gcd,ppg,pple)(h,g^2)
 		mpz_mul(b1, g, g);
 		mpz_set(b2, h);
-		gcd_ppg_pple(g, h, c, b2, b1);
+		gcd_ppg_pple(pool, g, h, c, b2, b1);
 
 		// **Step 8**
 		//
@@ -207,7 +209,7 @@ void append_cb(mpz_array *out, const mpz_t a, const mpz_t b) {
 
 		/* gmp_printf("rec call append_cb(%Zd, %Zd)\n", b1, d); */
 
-		append_cb(out, b1, d);
+		append_cb(pool, out, b1, d);
 
 		// **Sep 12**
 		//
@@ -220,20 +222,20 @@ void append_cb(mpz_array *out, const mpz_t a, const mpz_t b) {
 	//
 	// Recursively apply (b/x, c0).
 	mpz_fdiv_q(b1, b, x);
-	append_cb(out, b1, c0);
+	append_cb(pool, out, b1, c0);
 
 	// Free the memory.
-	mpz_clear(r);
-	mpz_clear(g);
-	mpz_clear(h);
-	mpz_clear(c);
-	mpz_clear(c0);
-	mpz_clear(x);
-	mpz_clear(y);
-	mpz_clear(d);
-	mpz_clear(b1);
-	mpz_clear(b2);
-	mpz_clear(a1);
+	pool_push(pool, r);
+	pool_push(pool, g);
+	pool_push(pool, h);
+	pool_push(pool, c);
+	pool_push(pool, c0);
+	pool_push(pool, x);
+	pool_push(pool, y);
+	pool_push(pool, d);
+	pool_push(pool, b1);
+	pool_push(pool, b2);
+	pool_push(pool, a1);
 }
 
 
@@ -247,7 +249,7 @@ void append_cb(mpz_array *out, const mpz_t a, const mpz_t b) {
 // Algorithm 14.1 [PDF page 19](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [prod test](test-prod.html) for basic usage.
-void prod(mpz_t rot, mpz_t * array, size_t from, size_t to) {
+void prod(mpz_pool *pool, mpz_t rot, mpz_t * array, size_t from, size_t to) {
 	size_t n = to - from;
 	mpz_t x, y;
 	
@@ -260,26 +262,26 @@ void prod(mpz_t rot, mpz_t * array, size_t from, size_t to) {
 	// Select T ⊆ S with #T = b#S/2c.
 	//
 	// Compute X ← prod(T).
-	mpz_init(x);
-	prod(x, array, from, to - n/2 - 1);
+	pool_pop(pool, x);
+	prod(pool, x, array, from, to - n/2 - 1);
 
 	// Compute Y ← prod(S−T).
-	mpz_init(y);
-	prod(y, array, to - n/2, to);
+	pool_pop(pool, y);
+	prod(pool, y, array, to - n/2, to);
 
 	// Print XY.
 	mpz_mul(rot, x, y);
 
 	// Free the memory.
-	mpz_clear(x);
-	mpz_clear(y);
+	pool_push(pool, x);
+	pool_push(pool, y);
 }
 
 // #### array verison
 // Compute product of an `mpz_array` and store it in `mpz_t rot`.
-void array_prod(mpz_array *a, mpz_t rot) {
+void array_prod(mpz_pool *pool, mpz_array *a, mpz_t rot) {
 	if (a->used > 0)
-		prod(rot, a->array, 0, a->used-1);
+		prod(pool, rot, a->array, 0, a->used-1);
 	else {
 		mpz_set_ui(rot, 1);
 	}
@@ -293,42 +295,42 @@ void array_prod(mpz_array *a, mpz_t rot) {
 // Algorithm 15.3 [PDF page 20](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [split test](test-split.html) for basic usage.
-void split(mpz_array *ret, const mpz_t a, mpz_t *p, size_t from, size_t to) {
+void split(mpz_pool *pool, mpz_array *ret, const mpz_t a, mpz_t *p, size_t from, size_t to) {
 	mpz_t b, x;
 	size_t n = to - from;
 
 	// **Sep 2**
 	//
 	//  Compute b ← ppi(a,prodP)
-	mpz_init(x);
-	mpz_init(b);
-	prod(x, p, from, to);
-	ppi(b, a, x);
-	mpz_clear(x);
+	pool_pop(pool, x);
+	pool_pop(pool, b);
+	prod(pool, x, p, from, to);
+	ppi(pool, b, a, x);
+	pool_push(pool, x);
 
 	// **Sep 2**
 	//
 	//  If #P = 1: find p ∈ P, print (p,b), and stop
 	if (n == 0) {
 		array_add(ret, b);
-		mpz_clear(b);
+		pool_push(pool, b);
 		return;
 	}
 
 	// **Sep 3**
 	//
 	//  Select Q ⊆ P with #Q = b#P/2c.
-	split(ret, b, p, from, to - n/2 - 1);
-	split(ret, b, p, to - n/2, to);
+	split(pool, ret, b, p, from, to - n/2 - 1);
+	split(pool, ret, b, p, to - n/2, to);
 
 	// Free the memory.
-	mpz_clear(b);
+	pool_push(pool, b);
 }
 
 // #### array verison
-void array_split(mpz_array *ret, const mpz_t a, mpz_array *p) {
+void array_split(mpz_pool *pool, mpz_array *ret, const mpz_t a, mpz_array *p) {
 	if (p->used > 0)
-		split(ret, a, p->array, 0, p->used-1);
+		split(pool, ret, a, p->array, 0, p->used-1);
 	else
 		fprintf(stderr, "array_split on empty array\n");
 }
@@ -341,7 +343,7 @@ void array_split(mpz_array *ret, const mpz_t a, mpz_array *p) {
 // Algorithm 16.2  [PDF page 21](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [cbextend test](test-cbextend.html) for basic usage.
-void cbextend(mpz_array *ret, mpz_array *p, const mpz_t b) {
+void cbextend(mpz_pool *pool, mpz_array *ret, mpz_array *p, const mpz_t b) {
 	size_t i;
 	mpz_t x, a, r;
 	mpz_array s;
@@ -358,15 +360,15 @@ void cbextend(mpz_array *ret, mpz_array *p, const mpz_t b) {
 	// **Sep 2**
 	//
 	//  Compute x ← prod P
-	mpz_init(x);
-	array_prod(p, x);
+	pool_pop(pool, x);
+	array_prod(pool, p, x);
 
 	// **Sep 3**
 	//
 	//   Compute (a,r) ← (ppi,ppo)(b, x) b
-	mpz_init(a);
-	mpz_init(r);
-	ppi_ppo(a, r, b, x);
+	pool_pop(pool, a);
+	pool_pop(pool, r);
+	ppi_ppo(pool, a, r, b, x);
 
 	// **Sep 4**
 	//
@@ -379,7 +381,7 @@ void cbextend(mpz_array *ret, mpz_array *p, const mpz_t b) {
 	//
 	//   Compute S ← split(a,P)
 	array_init(&s, p->used);
-	array_split(&s, a, p);
+	array_split(pool, &s, a, p);
 
 	// **Sep 6**
 	//
@@ -388,15 +390,15 @@ void cbextend(mpz_array *ret, mpz_array *p, const mpz_t b) {
 		fprintf(stderr, "logic error in cbextend: p.used != s.used");
 	} else {
 		for (i = 0; i < p->used; i++) {
-			append_cb(ret, p->array[i], s.array[i]);
+			append_cb(pool, ret, p->array[i], s.array[i]);
 		}
 	}
 
 	// Free the memory.
 	array_clear(&s);
-	mpz_clear(a);
-	mpz_clear(r);
-	mpz_clear(x);
+	pool_push(pool, a);
+	pool_push(pool, r);
+	pool_push(pool, x);
 }
 
 
@@ -416,7 +418,7 @@ int bit(size_t i, size_t k) {
 // Algorithm 17.3  [PDF page 23](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [cbmerge test](test-cbmerge.html) for basic usage.
-void cbmerge(mpz_array *s, mpz_array *p, mpz_array *q) {
+void cbmerge(mpz_pool *pool, mpz_array *s, mpz_array *p, mpz_array *q) {
 	mpz_array t; // T
 	mpz_array r; // buffer for q_k : bit_i k = 0 and q_k : bit_i k = 1
 	size_t n = q->used;
@@ -424,7 +426,7 @@ void cbmerge(mpz_array *s, mpz_array *p, mpz_array *q) {
 	size_t i = 0;
 	size_t k = 0;
 	mpz_t x; // buffer
-	mpz_init(x);
+	pool_pop(pool, x);
 
 	// Find the smallest b ≥ 1 with 2^b.
 	do {
@@ -438,7 +440,7 @@ void cbmerge(mpz_array *s, mpz_array *p, mpz_array *q) {
 	while(1) {
 		// If i = b: Print S. Stop.
 		if (i == b) {
-			mpz_clear(x);
+			pool_push(pool, x);
 			return;
 		}
 		// Find R ← {qk : bit(k) = 1}
@@ -448,11 +450,11 @@ void cbmerge(mpz_array *s, mpz_array *p, mpz_array *q) {
 		}
 
 		// Compute x ← prod{R}
-		array_prod(&r, x);
+		array_prod(pool, &r, x);
 
 		// Compute T ← cbextend(S ∪ {x})
 		array_init(&t, s->size);
-		cbextend(&t, s, x);
+		cbextend(pool, &t, s, x);
 
 		// Find R ← {qk : bit(k) = 1}
 		array_clear(&r);
@@ -462,12 +464,12 @@ void cbmerge(mpz_array *s, mpz_array *p, mpz_array *q) {
 		}
 
 		// Compute x ← prod{R}
-		array_prod(&r, x);
+		array_prod(pool, &r, x);
 
 		// Compute S ← cbextend(T ∪ {x})
 		array_clear(s);
 		array_init(s, s->size);
-		cbextend(s, &t, x);
+		cbextend(pool, s, &t, x);
 
 		// Free the memory.
 		array_clear(&r);
@@ -484,9 +486,12 @@ void cbmerge(mpz_array *s, mpz_array *p, mpz_array *q) {
 // Algorithm 18.1 [PDF page 24](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [cb test](test-cb.html) for basic usage.
-void cb(mpz_array *ret, mpz_t *s, size_t from, size_t to) {
+void cb(mpz_pool *pool, mpz_array *ret, mpz_t *s, size_t from, size_t to) {
 	size_t n = to - from;
 	mpz_array p, q;
+#if USE_OPENMP
+	mpz_pool pool_p, pool_q;
+#endif
 
 	// If #S = 1: Find a ∈ S. Print a if a != 1. Stop.
 	if (n == 0) {
@@ -507,24 +512,41 @@ void cb(mpz_array *ret, mpz_t *s, size_t from, size_t to) {
 	array_init(&p, n);
 	array_init(&q, n);
 #if USE_OPENMP
+	const int parent = omp_get_thread_num();
 #pragma omp parallel sections
 {
  #pragma omp section
  {
-	cb(&p, s, from, to - n/2 - 1);
+	const int id = omp_get_thread_num();
+	if (id != parent) {
+		/* printf("New thread\n"); */
+		pool_init(&pool_p, 0);
+		cb(&pool_p, &p, s, from, to - n/2 - 1);
+		pool_clear(&pool_p);
+	} else {
+		cb(pool, &p, s, from, to - n/2 - 1);
+	}
  }
  #pragma omp section
  {
-	cb(&q, s, to - n/2, to);
+	const int id = omp_get_thread_num();
+	if (id != parent) {
+		/* printf("New thread\n"); */
+		pool_init(&pool_q, 0);
+		cb(&pool_q, &q, s, to - n/2, to);
+		pool_clear(&pool_q);
+	} else {
+		cb(pool, &q, s, to - n/2, to);
+	}
  }
 }
 #else
-	cb(&p, s, from, to - n/2 - 1);
-	cb(&q, s, to - n/2, to);
+	cb(pool, &p, s, from, to - n/2 - 1);
+	cb(pool, &q, s, to - n/2, to);
 #endif
 	// Print cbmerge(P∪Q)
 	if (q.used && p.used) {
-		cbmerge(ret, &p, &q);
+		cbmerge(pool, ret, &p, &q);
 	} else if(!q.used && p.used) {
 		array_copy(ret, &p);
 		fprintf(stderr, "warning: q is empty in cb\n");
@@ -541,9 +563,9 @@ void cb(mpz_array *ret, mpz_t *s, size_t from, size_t to) {
 }
 
 // #### array verison
-void array_cb(mpz_array *ret, mpz_array *s) {
+void array_cb(mpz_pool *pool, mpz_array *ret, mpz_array *s) {
 	if (s->used > 0)
-		cb(ret, s->array, 0, s->used-1);
+		cb(pool, ret, s->array, 0, s->used-1);
 	else
 		fprintf(stderr, "array_cb on empty array\n");
 }
@@ -554,16 +576,16 @@ void array_cb(mpz_array *ret, mpz_array *s) {
 // Algorithm 19.2  [PDF page 24](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [reduce test](test-reduce.html) for basic usage.
-void reduce(mpz_t i, mpz_t pai, const mpz_t p, const mpz_t a) {
+void reduce(mpz_pool *pool, mpz_t i, mpz_t pai, const mpz_t p, const mpz_t a) {
 	mpz_t r, j, b, p2, a2;
 
 	// **Sep 1**
 	//
 	//  If p does not divide a: Print (0,a) and stop.
-	mpz_init(r);
+	pool_pop(pool, r);
 	mpz_fdiv_r(r, a, p);
 	if (mpz_cmp_ui(r, 0) != 0) {
-		mpz_clear(r);
+		pool_push(pool, r);
 		mpz_set_ui(i, 0);
 		mpz_set(pai, a);
 		return;
@@ -572,15 +594,15 @@ void reduce(mpz_t i, mpz_t pai, const mpz_t p, const mpz_t a) {
 	// **Sep 2**
 	//
 	//  Compute (j,b) ← reduce(p^2 ,a/p)
-	mpz_init(j);
-	mpz_init(b);
-	mpz_init(p2);
-	mpz_init(a2);
+	pool_pop(pool, j);
+	pool_pop(pool, b);
+	pool_pop(pool, p2);
+	pool_pop(pool, a2);
 	mpz_mul(p2, p, p);
 	mpz_fdiv_q(a2, a, p);
-	reduce(j, b, p2, a2);
-	mpz_clear(p2);
-	mpz_clear(a2);
+	reduce(pool, j, b, p2, a2);
+	pool_push(pool, p2);
+	pool_push(pool, a2);
 
 	// **Sep 3**
 	//
@@ -594,12 +616,12 @@ void reduce(mpz_t i, mpz_t pai, const mpz_t p, const mpz_t a) {
 		mpz_fdiv_q(b, b, p);
 		mpz_set(pai, b);
 
-		mpz_clear(r);
-		mpz_clear(b);
-		mpz_clear(j);
+		pool_push(pool, r);
+		pool_push(pool, b);
+		pool_push(pool, j);
 		return;
 	}
-	mpz_clear(r);
+	pool_push(pool, r);
 
 	// **Sep 4**
 	//
@@ -610,8 +632,8 @@ void reduce(mpz_t i, mpz_t pai, const mpz_t p, const mpz_t a) {
 	mpz_set(pai, b);
 
 	// Free the memory.
-	mpz_clear(b);
-	mpz_clear(j);
+	pool_push(pool, b);
+	pool_push(pool, j);
 }
 
 // ### Factoring over a coprime base
@@ -622,7 +644,7 @@ void reduce(mpz_t i, mpz_t pai, const mpz_t p, const mpz_t a) {
 // Algorithm 20.1  [PDF page 25](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [findfactor test](test-findfactor.html) for basic usage.
-int find_factor(mpz_array *out, const mpz_t a0, const mpz_t a, mpz_t *p, size_t from, size_t to) {
+int find_factor(mpz_pool *pool, mpz_array *out, const mpz_t a0, const mpz_t a, mpz_t *p, size_t from, size_t to) {
 	mpz_t m, c, y, b, c2;
 	size_t n = to - from;
 	unsigned int r = 1;
@@ -630,58 +652,58 @@ int find_factor(mpz_array *out, const mpz_t a0, const mpz_t a, mpz_t *p, size_t 
 	// If #P = 1: Find p ∈ P. Compute (n, c) ← reduce(p,a) by Algorithm 19.2. If
 	// c != 1, proclaim failure and stop. Otherwise print (p,n) and stop
 	if (n == 0) {
-		mpz_init(m);
-		mpz_init(c);
-		reduce(m, c, p[from], a);
+		pool_pop(pool, m);
+		pool_pop(pool, c);
+		reduce(pool, m, c, p[from], a);
 		if (mpz_cmp_ui(c, 1) != 0) {
 			r = 0;
 		} else {
 			if (mpz_cmp(a0, p[from]) != 0) {
-				mpz_init(y);
+				pool_pop(pool, y);
 				mpz_fdiv_q(y, a0, p[from]);
 				array_add(out, a0);
 				array_add(out, p[from]);
 				array_add(out, y);
-				mpz_clear(y);
+				pool_push(pool, y);
 				r = 0;
 			}
 		}
-		mpz_clear(m);
-		mpz_clear(c);
+		pool_push(pool, m);
+		pool_push(pool, c);
 		return r;
 	}
 	// Select Q ⊆ P with #Q = b#P/2c.
 
 	// Compute y ← prod Q
-	mpz_init(y);
-	prod(y, p, from, to - n/2 - 1);
+	pool_pop(pool, y);
+	prod(pool, y, p, from, to - n/2 - 1);
 
 	// Compute (b, c) ← (ppi,ppo)(a, y)
-	mpz_init(b);
-	mpz_init(c2);
-	ppi_ppo(b, c2, a, y);
+	pool_pop(pool, b);
+	pool_pop(pool, c2);
+	ppi_ppo(pool, b, c2, a, y);
 
 	// Apply Algorithm 20.1 to (b,Q) recursively. If Algorithm 20.1 fails, proclaim
 	// failure and stop.
-	if (!find_factor(out, a0, b, p, from, to - n/2 - 1)) {
+	if (!find_factor(pool, out, a0, b, p, from, to - n/2 - 1)) {
 		r = 0;
 	// Apply Algorithm 20.1 to (c,P−Q) recursively. If Algorithm 20.1 fails, proclaim
 	// failure and stop.
-	} else if (!find_factor(out, a0, c2, p, to - n/2, to)) {
+	} else if (!find_factor(pool, out, a0, c2, p, to - n/2, to)) {
 		r = 0;
 	}
 
 	// Free the memory.
-	mpz_clear(y);
-	mpz_clear(b);
-	mpz_clear(c2);
+	pool_push(pool, y);
+	pool_push(pool, b);
+	pool_push(pool, c2);
 	return r;
 }
 
 // #### array verison
-int array_find_factor(mpz_array *out, const mpz_t a, mpz_array *p) {
+int array_find_factor(mpz_pool *pool, mpz_array *out, const mpz_t a, mpz_array *p) {
 	if (p->used > 0)
-		return find_factor(out, a, a, p->array, 0, p->used-1);
+		return find_factor(pool, out, a, a, p->array, 0, p->used-1);
 	else {
 		fprintf(stderr, "array_printfactors on empty array\n");
 		return 0;
@@ -696,22 +718,22 @@ int array_find_factor(mpz_array *out, const mpz_t a, mpz_array *p) {
 // Algorithm 21.2  [PDF page 27](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [findfactors test](test-findfactors.html) for basic usage.
-void find_factors(mpz_array *out, mpz_t *s, size_t from, size_t to, mpz_array *p) {
+void find_factors(mpz_pool *pool, mpz_array *out, mpz_t *s, size_t from, size_t to, mpz_array *p) {
 	mpz_t x, y, z;
 	mpz_array d, q;
 	size_t i, n = to - from;
 
-	mpz_init(x);
-	array_prod(p, x);
+	pool_pop(pool, x);
+	array_prod(pool, p, x);
 
-	mpz_init(y);
-	prod(y, s, from, to);
+	pool_pop(pool, y);
+	prod(pool, y, s, from, to);
 
-	mpz_init(z);
-	ppi(z, x, y);
+	pool_pop(pool, z);
+	ppi(pool, z, x, y);
 
 	array_init(&d, p->size);
-	array_split(&d, z, p);
+	array_split(pool, &d, z, p);
 
 	array_init(&q, p->size);
 	for (i = 0; i < p->used; i++) {
@@ -720,23 +742,23 @@ void find_factors(mpz_array *out, mpz_t *s, size_t from, size_t to, mpz_array *p
 	}
 
 	if (n == 0) {
-		array_find_factor(out, y, &q);
+		array_find_factor(pool, out, y, &q);
 	} else {
-		find_factors(out, s, from, to - n/2 - 1, &q);
-		find_factors(out, s, to - n/2, to, &q);
+		find_factors(pool, out, s, from, to - n/2 - 1, &q);
+		find_factors(pool, out, s, to - n/2, to, &q);
 	}
 
-	mpz_clear(x);
-	mpz_clear(y);
-	mpz_clear(z);
+	pool_push(pool, x);
+	pool_push(pool, y);
+	pool_push(pool, z);
 	array_clear(&d);
 	array_clear(&q);
 }
 
 // #### array verison
-void array_find_factors(mpz_array *out, mpz_array *s, mpz_array *p) {
+void array_find_factors(mpz_pool *pool, mpz_array *out, mpz_array *s, mpz_array *p) {
 	if (s->used > 0)
-		find_factors(out, s->array, 0, s->used-1, p);
+		find_factors(pool, out, s->array, 0, s->used-1, p);
 	else
 		fprintf(stderr, "array_printfactors_set on empty array\n");
 }

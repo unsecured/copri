@@ -18,7 +18,9 @@ static char * test() {
 	mpz_array in;
 	mpz_array out;
 	mpz_t b;
+	mpz_pool pool;
 
+	pool_init(&pool, 0);
 	array_init(&in, 10);
 	array_init(&out, 3);
 
@@ -48,7 +50,7 @@ static char * test() {
 
 	mpz_set_str(b, "627401", 0);
 
-	array_split(&out, b, &in);
+	array_split(&pool, &out, b, &in);
 
 	printf("\nout:\n");
 	array_print(&out);
@@ -56,6 +58,7 @@ static char * test() {
 	array_clear(&in);
 	array_clear(&out);
 	mpz_clear(b);
+	pool_clear(&pool);
 
 	return 0;
 }

@@ -4,7 +4,7 @@ env = Environment(
     CCFLAGS = ['-Wall'],
     OMP = 0,
     BUILD_TESTS = 0,
-    LIBS = ['gmp', 'copri', 'array']
+    LIBS = ['copri', 'pool', 'array', 'gmp']
 )
 
 
@@ -27,6 +27,8 @@ if env['OMP']:
 	env.AppendUnique(CCFLAGS =['-fopenmp'])
 
 env.Library('array', ['array.c'], LIBS = ['gmp'])
+
+env.Library('pool', ['pool.c'], LIBS = ['gmp', 'array'])
 
 env.Library('copri', ['copri.c'])
 
@@ -59,6 +61,8 @@ if env['BUILD_TESTS']:
 	env.Program('test-cb', ['test-cb.c'])
 	
 	env.Program('test-findfactor', ['test-findfactor.c'])
+	
+	env.Program('test-pool', ['test-pool.c'])
 	
 env.Program('app', ['app.c'])
 
