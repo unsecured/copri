@@ -1,0 +1,7 @@
+#define INSTALL_PREFIX "%(install_prefix)s"
+
+#define VERSION_STR "%(version_str)s"
+
+#if %(openmp)d
+#define USE_OPENMP 1
+#endif
