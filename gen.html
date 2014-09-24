@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>gen.c</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>gen.c</h1>
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="array.html">
+                    array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="copri.html">
+                    copri.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="gen.html">
+                    gen.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-appendcb.html">
+                    test-appendcb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-array.html">
+                    test-array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-arrayio.html">
+                    test-arrayio.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cb.html">
+                    test-cb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbextend.html">
+                    test-cbextend.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbmerge.html">
+                    test-cbmerge.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-findfactor.html">
+                    test-findfactor.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppgpple.html">
+                    test-gcdppgpple.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppippo.html">
+                    test-gcdppippo.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-prod.html">
+                    test-prod.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-split.html">
+                    test-split.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-twopower.html">
+                    test-twopower.c
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>copri, Attacking RSA by factoring coprimes</p>
+<p>License: GNU Lesser General Public License (LGPL), version 3 or later
+See the lgpl.txt file in the root directory or <a href="https://www.gnu.org/licenses/lgpl">https://www.gnu.org/licenses/lgpl</a>.</p>
+
+        
+      
+        
+        <p>Generate openssl rsa keys and append it as gmp mpz binary integers to a file.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;openssl/rsa.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;openssl/sha.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdio.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;string.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdlib.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;unistd.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;gmp.h&gt;</span></pre></div>
+        
+      
+        
+        <h2 id="defaults">defaults</h2>
+<p>Define the default values for omitted command line arguments.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-preprocessor">#<span class="hljs-keyword">define</span> DEFAULT_COUNT	    1000</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">define</span> DEFAULT_KEY_LENGTH  2048  <span class="hljs-comment">// &gt;=1024</span></span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">define</span> DEFAULT_PUB_EXP     65537 <span class="hljs-comment">// 3, 5, 17, 257 other Fermat primes.</span></span></pre></div>
+        
+      
+        
+        <h2 id="helpers">helpers</h2>
+
+        
+      
+        
+        <p>Transform an <code>SHA1</code> hash to an hex string.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> SHA1BinaryToHex(<span class="hljs-keyword">const</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> *bin, <span class="hljs-keyword">char</span> *hex) {
+	<span class="hljs-keyword">int</span> i;
+	<span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i&lt;<span class="hljs-number">20</span>; ++i) {
+		<span class="hljs-built_in">sprintf</span>(&amp;hex[i*<span class="hljs-number">2</span>], <span class="hljs-string">"%02X"</span>, bin[i]);
+	}
+	hex[<span class="hljs-number">40</span>]=<span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+        
+        <h1 id="main">main</h1>
+
+        
+      
+        
+        <p>Read the command line arguments, open the output file and start appending rsa key <code>n</code> values to the file.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">int</span> main (<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span> *argv[]) {</pre></div>
+        
+      
+        
+        <p>Define the variables set by the argument parser</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">int</span> c, vflg = <span class="hljs-number">0</span>, sflg = <span class="hljs-number">0</span>, oflg = <span class="hljs-number">0</span>, fflg = <span class="hljs-number">0</span>, errflg = <span class="hljs-number">0</span>;
+	<span class="hljs-keyword">long</span> <span class="hljs-keyword">int</span> count = DEFAULT_COUNT;
+	<span class="hljs-keyword">long</span> <span class="hljs-keyword">int</span> keylength = DEFAULT_KEY_LENGTH;
+	<span class="hljs-keyword">long</span> <span class="hljs-keyword">int</span> e = DEFAULT_PUB_EXP;
+	<span class="hljs-keyword">char</span> *filename = <span class="hljs-string">"primes.lst"</span>;</pre></div>
+        
+      
+        
+        <p>and the variables used by the key generation loop.</p>
+
+        
+          <div class='highlight'><pre>	FILE *out;
+	RSA *keypair;
+	mpz_t n, p, q;
+	<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>;
+	<span class="hljs-keyword">char</span> *nstr;
+	size_t buff_len = <span class="hljs-number">0</span>;
+	<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> hash[SHA_DIGEST_LENGTH];
+	<span class="hljs-keyword">char</span> hex[SHA_DIGEST_LENGTH*<span class="hljs-number">2</span>+<span class="hljs-number">1</span>];</pre></div>
+        
+      
+        
+        <p>Read the command line arguments.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">while</span> ((c = getopt(argc, argv, <span class="hljs-string">":svofc:k:e:"</span>)) != -<span class="hljs-number">1</span>) {
+		<span class="hljs-keyword">switch</span>(c) {
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'s'</span>:
+			sflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'o'</span>:
+			oflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'v'</span>:
+			vflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'f'</span>:
+			fflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'c'</span>:
+			count = strtol(optarg, NULL, <span class="hljs-number">0</span>);
+			<span class="hljs-keyword">if</span> (count &lt; <span class="hljs-number">1</span>) errflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'k'</span>:
+			keylength = strtol(optarg, NULL, <span class="hljs-number">0</span>);
+			<span class="hljs-keyword">if</span> (keylength &lt; <span class="hljs-number">512</span>) errflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'e'</span>:
+			e = strtol(optarg, NULL, <span class="hljs-number">0</span>);
+			<span class="hljs-keyword">if</span> (e &lt; <span class="hljs-number">3</span>) errflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">':'</span>:
+			<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"Option -%c requires an operand\n"</span>, optopt);
+			errflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'?'</span>:
+			<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"Unrecognized option: '-%c'\n"</span>, optopt);
+			errflg++;
+		}
+	}
+
+	<span class="hljs-keyword">if</span> (optind &lt; argc) {
+		filename = argv[optind];
+		<span class="hljs-keyword">if</span> (optind + <span class="hljs-number">1</span> &lt; argc) errflg++;
+	}</pre></div>
+        
+      
+        
+        <p>Print the usage and exit if an error occurred during argument parsing.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (errflg) {
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"usage: [-vsof] [-c count] [-k keylength] [-e exponent] [file]\n"</span>\
+						<span class="hljs-string">"\n\t-v        be more verbose"</span>\
+						<span class="hljs-string">"\n\t-s        print sha1 hash representation"</span>\
+						<span class="hljs-string">"\n\t-o        print base 10 representation"</span>\
+						<span class="hljs-string">"\n\t-f        include one factorizable key"</span>\
+						<span class="hljs-string">"\n"</span>\
+						<span class="hljs-string">"\n\t-c COUNT        the amount of keys"</span>\
+						<span class="hljs-string">"\n\t-k KEYLENGTH    the key length"</span>\
+						<span class="hljs-string">"\n\t-e EXPONENT     the exponent of the keys"</span>\
+						<span class="hljs-string">"\n\n"</span>);
+		<span class="hljs-built_in">exit</span>(<span class="hljs-number">2</span>);
+	}</pre></div>
+        
+      
+        
+        <p>Set <code>out</code> to <code>stdout</code> if the filename is <code>-</code>.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (<span class="hljs-built_in">strcmp</span>(filename, <span class="hljs-string">"-"</span>) == <span class="hljs-number">0</span>) {
+		out = stdout;</pre></div>
+        
+      
+        
+        <p>Print the used parameters if the verbose flag is set.</p>
+
+        
+          <div class='highlight'><pre>		<span class="hljs-keyword">if</span> (vflg &gt; <span class="hljs-number">0</span>) {
+			<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"Printing %ld RSA n values to stdout.\nThe key length is %ld bit, e: %ld.\n"</span>, count, keylength, e);
+		}
+	} <span class="hljs-keyword">else</span> {</pre></div>
+        
+      
+        
+        <p>Open the output file.</p>
+
+        
+          <div class='highlight'><pre>		out = fopen(filename, <span class="hljs-string">"a+"</span>);
+		<span class="hljs-keyword">if</span> (out == NULL) {
+			<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Cannot save to file %s.\n"</span>, filename);
+			<span class="hljs-built_in">exit</span>(<span class="hljs-number">3</span>);
+		}</pre></div>
+        
+      
+        
+        <p>Print the used parameters if the verbose flag is set.</p>
+
+        
+          <div class='highlight'><pre>		<span class="hljs-keyword">if</span> (vflg &gt; <span class="hljs-number">0</span>) {
+			<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"Adding %ld RSA n values to file %s.\nThe key length is %ld bit, e: %ld.\n"</span>, count, filename, keylength, e);
+		}
+	}</pre></div>
+        
+      
+        
+        <p>Initialize the the integer <code>n</code> and start the generation loop.</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(n);
+	<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; count; i++) {</pre></div>
+        
+      
+        
+        <p>Generate the <code>keypair</code> with openssl.</p>
+
+        
+          <div class='highlight'><pre>		keypair = RSA_generate_key(keylength, e, NULL, NULL);
+
+		<span class="hljs-keyword">if</span> (fflg &amp;&amp; i == <span class="hljs-number">0</span>) {
+			nstr = BN_bn2dec(keypair-&gt;p);
+			mpz_init(p);
+			mpz_set_str(p, nstr, <span class="hljs-number">10</span>);
+			<span class="hljs-built_in">free</span>(nstr);
+		}
+
+		<span class="hljs-keyword">if</span> (fflg &amp;&amp; (i+<span class="hljs-number">1</span>) == count) {
+			nstr = BN_bn2dec(keypair-&gt;q);
+			mpz_init(q);
+			mpz_set_str(q, nstr, <span class="hljs-number">10</span>);
+			<span class="hljs-built_in">free</span>(nstr);
+			mpz_mul(n, p, q);
+			nstr = mpz_get_str(NULL, <span class="hljs-number">10</span>, n);
+			mpz_clear(p);
+			mpz_clear(q);
+		} <span class="hljs-keyword">else</span> {</pre></div>
+        
+      
+        
+        <p>Convert it to a base 10 string.</p>
+
+        
+          <div class='highlight'><pre>			nstr = BN_bn2dec(keypair-&gt;n);
+		}</pre></div>
+        
+      
+        
+        <p>Check if we should print the sha1 hash.</p>
+
+        
+          <div class='highlight'><pre>		<span class="hljs-keyword">if</span> (sflg &gt; <span class="hljs-number">0</span>) {</pre></div>
+        
+      
+        
+        <p>Build the SHA1 hash of the base 10 string.</p>
+
+        
+          <div class='highlight'><pre>			SHA1((<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">char</span> *)nstr, <span class="hljs-keyword">sizeof</span>(nstr), hash);</pre></div>
+        
+      
+        
+        <p>Convert the hash to base16.</p>
+
+        
+          <div class='highlight'><pre>			SHA1BinaryToHex(hash, hex);</pre></div>
+        
+      
+        
+        <p>Print the sha1 hash.</p>
+
+        
+          <div class='highlight'><pre>			<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"writing sha1: %s\n"</span>, hex);
+		}</pre></div>
+        
+      
+        
+        <p>Print the base 10 string to stdout if the <code>o</code> option is set.</p>
+
+        
+          <div class='highlight'><pre>		<span class="hljs-keyword">if</span> (oflg &gt; <span class="hljs-number">0</span>) {
+			<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"%s\n"</span>, nstr);
+		}</pre></div>
+        
+      
+        
+        <p>Convert the base 10 string to an mpz.</p>
+
+        
+          <div class='highlight'><pre>		mpz_set_str(n, nstr, <span class="hljs-number">10</span>);</pre></div>
+        
+      
+        
+        <p>Append the raw mpz with 4 bytes of size information.</p>
+
+        
+          <div class='highlight'><pre>		buff_len = mpz_out_raw(out, n);
+		<span class="hljs-keyword">if</span> (buff_len == <span class="hljs-number">0</span>) {
+			<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Cannot write to file %s.\n"</span>, filename);
+		}</pre></div>
+        
+      
+        
+        <p>Free memory.</p>
+
+        
+          <div class='highlight'><pre>		<span class="hljs-built_in">free</span>(nstr);
+		RSA_free(keypair);
+	}
+	mpz_clear(n);</pre></div>
+        
+      
+        
+        <p>Close the output file.</p>
+
+        
+          <div class='highlight'><pre>	fclose(out);
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

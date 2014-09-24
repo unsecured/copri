@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>test-prod.c</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>test-prod.c</h1>
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="array.html">
+                    array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="copri.html">
+                    copri.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="gen.html">
+                    gen.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-appendcb.html">
+                    test-appendcb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-array.html">
+                    test-array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-arrayio.html">
+                    test-arrayio.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cb.html">
+                    test-cb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbextend.html">
+                    test-cbextend.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbmerge.html">
+                    test-cbmerge.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-findfactor.html">
+                    test-findfactor.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppgpple.html">
+                    test-gcdppgpple.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppippo.html">
+                    test-gcdppippo.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-prod.html">
+                    test-prod.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-split.html">
+                    test-split.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-twopower.html">
+                    test-twopower.c
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>copri, Attacking RSA by factoring coprimes</p>
+<p>License: GNU Lesser General Public License (LGPL), version 3 or later
+See the lgpl.txt file in the root directory or <a href="https://www.gnu.org/licenses/lgpl">https://www.gnu.org/licenses/lgpl</a>.</p>
+
+        
+      
+        
+        <p>This is a test of <a href="copri.html">copri</a> <code>prod</code> and <code>array_prod</code> functions.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdlib.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdio.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;gmp.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "test.h"</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "copri.h"</span>
+
+<span class="hljs-keyword">int</span> tests_passed = <span class="hljs-number">0</span>;
+<span class="hljs-keyword">int</span> tests_failed = <span class="hljs-number">0</span>;</pre></div>
+        
+      
+        
+        <p><strong>TODO</strong>: Check the performance an 1024 and 2048 bit integer array.</p>
+
+        
+      
+        
+        <p><strong>Test <code>prod</code></strong>.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">static</span> <span class="hljs-keyword">char</span> * test_factorial(size_t size, <span class="hljs-keyword">char</span> * expect) {
+	mpz_t p;
+	mpz_t e;
+	mpz_t *arr;
+	size_t g;</pre></div>
+        
+      
+        
+        <p>Initialize <code>p</code> and <code>e</code>.</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(p);
+	mpz_init_set_str(e, expect, <span class="hljs-number">10</span>);</pre></div>
+        
+      
+        
+        <p>Allocate the memory for the array.</p>
+
+        
+          <div class='highlight'><pre>	arr = <span class="hljs-built_in">malloc</span>(size*<span class="hljs-keyword">sizeof</span>(mpz_t));
+	<span class="hljs-keyword">if</span> (arr == NULL) {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">"error malloc = NULL"</span>;
+	}</pre></div>
+        
+      
+        
+        <p>Set the integers in the array.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">for</span>(g=<span class="hljs-number">1</span>;g&lt;=size;g++) {
+		mpz_init_set_ui(arr[g-<span class="hljs-number">1</span>], g);
+	}</pre></div>
+        
+      
+        
+        <p>Calculate the product of the array.</p>
+
+        
+          <div class='highlight'><pre>	prod(p, arr, <span class="hljs-number">0</span>, size-<span class="hljs-number">1</span>);</pre></div>
+        
+      
+        
+        <p>Check the return value.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (mpz_cmp(p, e) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">"calculation error"</span>;
+	}</pre></div>
+        
+      
+        
+        <p>Check if the array is unmodified.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">for</span>(g=<span class="hljs-number">0</span>; g&lt;size; g++) {
+		<span class="hljs-keyword">if</span> (mpz_get_ui(arr[g]) != (g+<span class="hljs-number">1</span>))
+			<span class="hljs-keyword">return</span> <span class="hljs-string">"array is modified"</span>;
+	}</pre></div>
+        
+      
+        
+        <p>Free memory.</p>
+
+        
+          <div class='highlight'><pre>	mpz_clear(p);
+	mpz_clear(e);
+	
+	<span class="hljs-keyword">for</span>(g=<span class="hljs-number">0</span>;g&lt;size;g++) {
+		mpz_clear(arr[g]);
+	}
+	<span class="hljs-built_in">free</span>(arr);
+
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+        
+        <p><strong>Test <code>prod</code> and the <code>array</code> wrapper</strong>.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">static</span> <span class="hljs-keyword">char</span> * test_array_prod() {
+	mpz_array a;
+	mpz_t p;
+	mpz_t e;
+	mpz_t r;
+	size_t g;</pre></div>
+        
+      
+        
+        <p>Initialize <code>r</code> and <code>p</code>.</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(r);
+	mpz_init(p);</pre></div>
+        
+      
+        
+        <p>10! = 3628800</p>
+
+        
+          <div class='highlight'><pre>	mpz_init_set_str(e, <span class="hljs-string">"3628800"</span>, <span class="hljs-number">10</span>);</pre></div>
+        
+      
+        
+        <p>Create an to small array.</p>
+
+        
+          <div class='highlight'><pre>	array_init(&amp;a, <span class="hljs-number">4</span>);</pre></div>
+        
+      
+        
+        <p>Add the ingeres 1 to 10.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">for</span>(g=<span class="hljs-number">1</span>;g&lt;=<span class="hljs-number">10</span>;g++) {
+		mpz_set_ui(p, g);
+		array_add(&amp;a, p);
+	}</pre></div>
+        
+      
+        
+        <p>Calculate the product of the array.</p>
+
+        
+          <div class='highlight'><pre>	array_prod(&amp;a, r);</pre></div>
+        
+      
+        
+        <p>Check the return value.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (mpz_cmp(r, e) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> mpz_get_str(NULL, <span class="hljs-number">10</span>, r);
+	}</pre></div>
+        
+      
+        
+        <p>Check if the array is unmodified.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">for</span>(g=<span class="hljs-number">0</span>; g&lt;a.used; g++) {
+		<span class="hljs-keyword">if</span> (mpz_get_ui(a.<span class="hljs-built_in">array</span>[g]) != (g+<span class="hljs-number">1</span>))
+			<span class="hljs-keyword">return</span> <span class="hljs-string">"array is modified"</span>;
+	}</pre></div>
+        
+      
+        
+        <p>Free memory.</p>
+
+        
+          <div class='highlight'><pre>	array_clear(&amp;a);
+	mpz_clear(p);
+	mpz_clear(e);
+	mpz_clear(r);
+	
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+        
+        <p>Run all tests.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">int</span> main(<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span> **argv) {
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Starting prod test\n"</span>);
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Testing 10!                    "</span>);
+	test_evaluate(test_factorial(<span class="hljs-number">10</span>, <span class="hljs-string">"3628800"</span>));
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Testing 128!                   "</span>);
+	test_evaluate(test_factorial(<span class="hljs-number">128</span>, <span class="hljs-string">"385620482362580421735677065923463640617493109590223\
+	59027882840327637340257516554356068616858850736153403005183305891634759217293226249885\
+	7766114955245039357760034644709279247692495585280000000000000000000000000000000"</span>));
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Testing 511!                   "</span>);
+	test_evaluate(test_factorial(<span class="hljs-number">511</span>, <span class="hljs-string">"679158162721211985016219905770625920310986456180373\
+	93952001461553742390860670948114711129889443403391490672521683866122127930019935560354\
+	15315490493377694167162341094623363024629705069482370340382583639770604852051025007751\
+	07890088126098656378038715081462473522696873528419842162562552418127764020680024482968\
+	79059826849624386667965032367358173809431908950554997014218480162185026961392533555024\
+	36868966699600503105213725244434249053312402536660142178787716218331892912089890567615\
+	37396764500221195542160060191115032457878894805142233039906616035852229028098305658113\
+	90619752032684095172270976285035652939151733750168427720339924200279546132311655195953\
+	48486928597217331364955500576411208445051037476983219685497912253874647579721947172586\
+	38273203703524026896110956010053969587186130935220793485519208765935248804175472350417\
+	31424381559806483665425737450956215200571101573797878962406687241226979994202334868501\
+	45255759861617124660957045718318318733087761592391069549905082253655735352487467721745\
+	68817163299338489597213440259556693245952000000000000000000000000000000000000000000000\
+	000000000000000000000000000000000000000000000000000000000000000000000000000000000"</span>));
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Testing 1024!                  "</span>);
+	test_evaluate(test_factorial(<span class="hljs-number">1024</span>, <span class="hljs-string">"54185287960588572830769219446838547380015539635380\
+	13444482870270683210612073376603733140984136214586719079188457089807539319941657701873\
+	68260454133333721939108367528012764993769768292516937891165755680659663747947314518404\
+	88667767255612518869433525121367727452196343077013371320579624843312887008843617165469\
+	02375183904529447322778084029321587220618538061628060639254353108221868482392871302616\
+	90914211362251144684713888587881629252104046295315949943900357882410243934315037444113\
+	89080618140621086395327523537588501859845158222959965455854124278913090248694429861092\
+	31533075791316757451464363040248908204429077345618273690305022527969265530729673709907\
+	58747793127635104702469889667961462133026237158973227857814631807156427767644064591085\
+	07656478345632445773685381033698177608049870776704639427260534141677912569773337456803\
+	74751866762659616656158846814502633370425226641418621570468256847733609443267374936766\
+	74915098953768112945831626643856479027816385730291542667725665642276826058264393884514\
+	91197641967550929020859271315636298329098944105273212518724952750131407167640551693619\
+	07818212367019122957673631170541265899299164820085157817519554669109028387292322245099\
+	06388638147771255227782631322385756948819393658889908993670874516860653098411020299853\
+	81628156433498184710577783953474253149962210348880758451370576983976399310392966504604\
+	61211666513451311495136574008690563348678598850256017872849825677873144072165242722629\
+	97319791568603629406624740101482697559533155736658800562921274680657285201570401940692\
+	28555780061142905575532454979400893984914681263986075008526329882022471958550534477371\
+	15906566828210414172650406586006838449451043549988128868013165515517146733883233408517\
+	63819713591312372548673734783537316341517369387565212899726597964903241208727348690699\
+	80299636926507008875838485454754227277102425504990231927583091815744820519642107283720\
+	49372935161753419577754224531524422803913724077178916612030610402558300550338867900521\
+	16025408740454620938384367637886658769912790922323717371343176067483352513629123362885\
+	89362713229418356588401041872786935443907708527828855830842709046107501900718493313991\
+	55582127523923298797806496390753338457191738228405018695704636266002352655875023355954\
+	89311637509380219119860471335771652403999403296360245577257963673286654348957325740999\
+	71056713162327234576676193765140810399919363390828642051009857745452406810689739249313\
+	82873622262579200000000000000000000000000000000000000000000000000000000000000000000000\
+	00000000000000000000000000000000000000000000000000000000000000000000000000000000000000\
+	00000000000000000000000000000000000000000000000000000000000000000000000000000000000000\
+	0000000000"</span>));
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Testing array wrapper          "</span>);
+	test_evaluate(test_array_prod());
+
+	test_end();
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

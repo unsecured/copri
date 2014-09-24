@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Attacking RSA by factoring coprimes</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          
+          <h1 id="attacking-rsa-by-factoring-coprimes">Attacking RSA by factoring coprimes</h1>
+<h3 id="by-martin-wind-gerhard-reithofer-">by Martin Wind, Gerhard Reithofer.</h3>
+<p>Algorithm by Daniel J. Bernstein <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">http://cr.yp.to/lineartime/dcba-20040404.pdf</a></p>
+<h2 id="motivation">Motivation</h2>
+<p>The most common asymmetric cipher currently in use is RSA. In RSA, this asymmetry is based on the practical difficulty of factoring the product of two large prime numbers, the factoring problem. </p>
+<p>A user of RSA creates and then publishes a public key based on the two large prime numbers, along with an auxiliary value. The prime numbers must be kept secret. Anyone can use the public key to encrypt a message, but with currently published methods, if the public key is large enough, only someone with knowledge of the prime factors can feasibly decode the message.</p>
+<p>If one of the secret prime numbers is used in two keys the an attacker can work out the prime factor by calculating the greatest common divisor (gcd) of these keys.</p>
+<pre><code>n ... public key
+q ... secret prime factor
+p ... secret prime factor
+
+n₀ = p₀ q₀
+n₁ = p₁ q₀
+
+gcd(n₀, n₁) = q₀
+</code></pre><p>Collisions of RSA keys should never happen for realistic key sizes and good random number generators.</p>
+<p>Assume a 1024 bit RSA key; the primes from which it has been derived are about 512 bit. If we assume every 500ths 512 bit number is a prime, and we assume the most significant bit of the 512 bit number is set, we still get about 2⁵⁰⁰ or 10¹⁵⁰ different primes. If you apply the birthday problem to these numbers then you would expect RSA keys to have a prime in common about every 2²⁵⁰ or 10⁷⁵ key generations. To put this in perspective the age of the universe is 10¹⁷ seconds.</p>
+<p>This is large enough to never happen in practice. Unfortunately bad PRNGs which cause collisions do happen in practice.</p>
+<p>To detect those insecure keys one could check the <em>gcd</em> of every known key. Unfortunately simply calculating every combination of public keys has an growth rate of <code>n(n-1)</code>. </p>
+<p>The algorithm by Daniel J. Bernstein is able to solve this problem in essentially linear time</p>
+<h3 id="runtime-in-seconds">Runtime in seconds</h3>
+<p><img src="runtime.png" alt="Runtime"></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right"><strong>key count</strong></th>
+<th style="text-align:center"><strong>copri</strong></th>
+<th style="text-align:center"><strong>n * (n-1)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">1000</td>
+<td style="text-align:center">6</td>
+<td style="text-align:center">5</td>
+</tr>
+<tr>
+<td style="text-align:right">5000</td>
+<td style="text-align:center">86</td>
+<td style="text-align:center">113</td>
+</tr>
+<tr>
+<td style="text-align:right">1000</td>
+<td style="text-align:center">255</td>
+<td style="text-align:center">454</td>
+</tr>
+<tr>
+<td style="text-align:right">50000</td>
+<td style="text-align:center">2799</td>
+<td style="text-align:center">11351</td>
+</tr>
+<tr>
+<td style="text-align:right">100000</td>
+<td style="text-align:center">7669</td>
+<td style="text-align:center">45404</td>
+</tr>
+</tbody>
+</table>
+<h2 id="package-content">Package Content</h2>
+<ul>
+<li><strong><a href="copri.html">copri</a></strong> is the C implementation of the Daniel J. Bernstein “Factoring into coprimes in essentially linear time” algorithm.</li>
+<li><a href="app.html">app</a> uses the copri library and provides an simple command line interface.</li>
+<li><a href="gen.html">gen</a> is a util to generate RSA keys (only the <code>n</code> values) and store these keys an raw gmp format.</li>
+<li><a href="array.html">array</a> is a minimal dynamic sized array library.</li>
+</ul>
+<h2 id="download">Download</h2>
+<p>The latest build: <a href="copri.tar.gz">copri.tar.gz</a></p>
+<h2 id="build">Build</h2>
+<p>Requirements:</p>
+<ul>
+<li><strong>scons</strong>: software construction tool</li>
+<li><strong>GMP</strong>: library for arbitrary precision arithmetic</li>
+<li><strong>OpenMP (optional)</strong>: multithreading</li>
+<li><strong>NodeJS and docco (optional)</strong>: to build the documentation</li>
+</ul>
+<p>On Debian or Ubuntu simply install the packages <code>scons</code>, <code>libgmp-dev</code> (and <code>nodejs</code> if you want to build the documentation). Debian and Ubuntu should ship an suitable OpenMP compiler see <a href="http://openmp.org/wp/openmp-compilers/">openmp-compilers</a>.</p>
+<p>Unpack the Tarball (<code>tar xvzf copri.tar.gz</code>), enter the directory and build it by running 
+<code>scons</code> without any parameters. If you want to build copri without OpenMP run <code>scons --no-omp</code>.</p>
+<p><strong>Scons (Manual Installation)</strong></p>
+<p>Download the <a href="http://prdownloads.sourceforge.net/scons/scons-2.3.1.tar.gz">scons</a> software construction tool.</p>
+<p>Unpack the Tarball (<code>tar xvzf scons-2.3.1.tar.gz</code>), enter the directory and install it by <code>python setup.py install</code>.</p>
+<p><strong>GMP (Manual Installation)</strong></p>
+<p>Download <a href="https://gmplib.org/download/gmp/gmp-5.1.3.tar.bz2">gmp</a>.</p>
+<pre><code>./configure
+make
+sudo make install
+</code></pre><p><strong>Documentation (optional)</strong></p>
+<p>Install <a href="http://nodejs.org/download/">nodejs</a>, then install docco <code>sudo npm install -g docco</code>.
+Now build the Documentation <code>make doc</code>.</p>
+<h2 id="quick-start">Quick Start</h2>
+<p>Run <code>./gen -k 1024 -c 1000 p1024_x1000.lst</code> to generate an list of 1024bit keys or download one of our <a href="#key-list-download">test key lists</a>.</p>
+<p>Then run <code>./app -v p1024_x1000.lst</code> to check the <code>p1024_x1000.lst</code> list for coprimes.</p>
+<h2 id="key-list-download">Key List Download</h2>
+<ul>
+<li><a href="p1024_x1000.lst.gz">p1024_x1000.lst</a> - 1000 1024bit keys</li>
+<li><a href="p1024_x5000.lst.gz">p1024_x5000.lst</a> - 5000 1024bit keys</li>
+<li><a href="p1024_x10000.lst.gz">p1024_x10000.lst</a> - 10000 1024bit keys</li>
+<li><a href="p1024_x50000.lst.gz">p1024_x50000.lst</a> - 50000 1024bit keys</li>
+<li><a href="p1024_x100000.lst.gz">p1024_x100000.lst</a> - 100000 1024bit keys</li>
+</ul>
+
+          
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="array.html">
+                    array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="copri.html">
+                    copri.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="gen.html">
+                    gen.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-appendcb.html">
+                    test-appendcb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-array.html">
+                    test-array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-arrayio.html">
+                    test-arrayio.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cb.html">
+                    test-cb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbextend.html">
+                    test-cbextend.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbmerge.html">
+                    test-cbmerge.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-findfactor.html">
+                    test-findfactor.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppgpple.html">
+                    test-gcdppgpple.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppippo.html">
+                    test-gcdppippo.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-prod.html">
+                    test-prod.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-split.html">
+                    test-split.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-twopower.html">
+                    test-twopower.c
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

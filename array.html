@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>array.c</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>array.c</h1>
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="array.html">
+                    array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="copri.html">
+                    copri.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="gen.html">
+                    gen.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-appendcb.html">
+                    test-appendcb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-array.html">
+                    test-array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-arrayio.html">
+                    test-arrayio.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cb.html">
+                    test-cb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbextend.html">
+                    test-cbextend.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbmerge.html">
+                    test-cbmerge.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-findfactor.html">
+                    test-findfactor.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppgpple.html">
+                    test-gcdppgpple.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppippo.html">
+                    test-gcdppippo.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-prod.html">
+                    test-prod.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-split.html">
+                    test-split.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-twopower.html">
+                    test-twopower.c
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>copri, Attacking RSA by factoring coprimes</p>
+<p>License: GNU Lesser General Public License (LGPL), version 3 or later
+See the lgpl.txt file in the root directory or <a href="https://www.gnu.org/licenses/lgpl">https://www.gnu.org/licenses/lgpl</a>.</p>
+
+        
+          <div class='highlight'><pre>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdlib.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdio.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;unistd.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;gmp.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "array.h"</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "config.h"</span></pre></div>
+        
+      
+        
+        <h1 id="array-auxiliary">array auxiliary</h1>
+<p>An minimal dynamic sized array.</p>
+<p>The struct <code>mpz_array</code> is in <code>copri.h</code> defined as follows:</p>
+<pre><code><span class="hljs-keyword">typedef</span> <span class="hljs-keyword">struct</span> {
+   mpz_t * <span class="hljs-built_in">array</span>;
+   size_t used;
+   size_t size;
+} mpz_array;
+</code></pre><p>See <a href="test-array.html">array test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">define</span> ARRAY_DEFAULT_SIZE 256</span></pre></div>
+        
+      
+        
+        <p>Initialize the array with an capacity of <code>size</code>.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> array_init(mpz_array *a, size_t size) {
+	<span class="hljs-keyword">if</span> (size &lt; <span class="hljs-number">1</span>) size = ARRAY_DEFAULT_SIZE;
+	a-&gt;<span class="hljs-built_in">array</span> = (mpz_t *)<span class="hljs-built_in">malloc</span>(size * <span class="hljs-keyword">sizeof</span>(mpz_t));
+	a-&gt;used = <span class="hljs-number">0</span>;
+	a-&gt;size = size;
+}</pre></div>
+        
+      
+        
+        <p>Copy the elements from <code>src</code> to <code>target</code>.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> array_copy(mpz_array *target, mpz_array *src) {
+	size_t i;
+	<span class="hljs-keyword">if</span> ((target-&gt;size - target-&gt;used) &lt; src-&gt;size) {
+		target-&gt;size = src-&gt;size + target-&gt;used;
+		target-&gt;<span class="hljs-built_in">array</span> = (mpz_t *)realloc(target-&gt;<span class="hljs-built_in">array</span>, target-&gt;size * <span class="hljs-keyword">sizeof</span>(mpz_t));
+	}
+	<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; src-&gt;used; i++) {
+		mpz_init_set(target-&gt;<span class="hljs-built_in">array</span>[target-&gt;used++], src-&gt;<span class="hljs-built_in">array</span>[i]);
+	}
+}</pre></div>
+        
+      
+        
+        <p>Adds an <code>integer</code> to the end of the array. This function expects an <strong>initialized</strong> integer and does an deep copy.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> array_add(mpz_array *a, <span class="hljs-keyword">const</span> mpz_t integer) {
+	<span class="hljs-keyword">if</span> (a-&gt;used == a-&gt;size) {
+		a-&gt;size *= <span class="hljs-number">2</span>;
+		a-&gt;<span class="hljs-built_in">array</span> = (mpz_t *)realloc(a-&gt;<span class="hljs-built_in">array</span>, a-&gt;size * <span class="hljs-keyword">sizeof</span>(mpz_t));
+	}
+	mpz_init_set(a-&gt;<span class="hljs-built_in">array</span>[a-&gt;used++], integer);
+}</pre></div>
+        
+      
+        
+        <p>Frees the memory of the array. This function expects initialized integers in the whole array.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> array_clear(mpz_array *a) {
+	size_t i;
+	<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; a-&gt;used; i++) {
+		mpz_clear(a-&gt;<span class="hljs-built_in">array</span>[i]);
+	}
+	<span class="hljs-built_in">free</span>(a-&gt;<span class="hljs-built_in">array</span>);
+	a-&gt;<span class="hljs-built_in">array</span> = NULL;
+	a-&gt;used = a-&gt;size = <span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+        
+        <h2 id="load-store-print-a-array">load, store &amp; print a array</h2>
+
+        
+      
+        
+        <p>Populates an array with values read from a file.</p>
+
+        
+          <div class='highlight'><pre>size_t array_of_file(mpz_array *a, <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> *filename) {
+	size_t count = <span class="hljs-number">0</span>;
+	mpz_t i;
+	<span class="hljs-keyword">if</span> (access(filename, R_OK) == -<span class="hljs-number">1</span>) <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+	FILE *in = fopen(filename, <span class="hljs-string">"r"</span>);
+	mpz_init(i);
+	<span class="hljs-keyword">while</span>(mpz_inp_raw(i, in) &gt; <span class="hljs-number">0</span>) {
+		array_add(a, i);
+		count++;
+	}
+	mpz_clear(i);
+	fclose(in);
+	<span class="hljs-keyword">return</span> count;
+}</pre></div>
+        
+      
+        
+        <p><strong>TODO</strong></p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">int</span> array_to_file(mpz_array *a, <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> *filename) {
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+        
+        <p>Print a <code>mpz_array</code> in base 10 to stdout.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> array_print(mpz_array *a) {
+	size_t i;
+	<span class="hljs-keyword">char</span>* str;
+	<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; a-&gt;used; i++) {
+		str = mpz_get_str(NULL, <span class="hljs-number">10</span>, a-&gt;<span class="hljs-built_in">array</span>[i]);
+		<span class="hljs-built_in">printf</span>(<span class="hljs-string">"%zu: %s\n"</span>, i, str);
+		<span class="hljs-built_in">free</span>(str);
+	}
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

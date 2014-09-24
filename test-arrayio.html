@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>test-arrayio.c</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>test-arrayio.c</h1>
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="array.html">
+                    array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="copri.html">
+                    copri.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="gen.html">
+                    gen.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-appendcb.html">
+                    test-appendcb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-array.html">
+                    test-array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-arrayio.html">
+                    test-arrayio.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cb.html">
+                    test-cb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbextend.html">
+                    test-cbextend.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbmerge.html">
+                    test-cbmerge.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-findfactor.html">
+                    test-findfactor.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppgpple.html">
+                    test-gcdppgpple.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppippo.html">
+                    test-gcdppippo.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-prod.html">
+                    test-prod.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-split.html">
+                    test-split.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-twopower.html">
+                    test-twopower.c
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>copri, Attacking RSA by factoring coprimes</p>
+<p>License: GNU Lesser General Public License (LGPL), version 3 or later
+See the lgpl.txt file in the root directory or <a href="https://www.gnu.org/licenses/lgpl">https://www.gnu.org/licenses/lgpl</a>.</p>
+
+        
+      
+        
+        <p>This is a test of <a href="copri.html">copri</a> <code>array_of_file</code> and <code>array_to_file</code> functions.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdlib.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdio.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;gmp.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "test.h"</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "copri.h"</span>
+
+<span class="hljs-keyword">int</span> tests_passed = <span class="hljs-number">0</span>;
+<span class="hljs-keyword">int</span> tests_failed = <span class="hljs-number">0</span>;</pre></div>
+        
+      
+        
+        <p>Loads an array from an file.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">static</span> <span class="hljs-keyword">char</span> * test_load_gen() {
+	mpz_array a;
+	size_t count;
+	array_init(&amp;a, <span class="hljs-number">100</span>);
+	count = array_of_file(&amp;a, <span class="hljs-string">"primes.lst"</span>);
+	<span class="hljs-keyword">if</span> (count == <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> <span class="hljs-string">"Can't load primes.lst ! run ./gen first !"</span>;
+	<span class="hljs-keyword">if</span> (a.used != count) <span class="hljs-keyword">return</span> <span class="hljs-string">"Array size and load count do not match"</span>;
+	<span class="hljs-comment">/* for(i = 0; i &lt; a.used; i++) printf("%s\n", mpz_get_str(NULL, 10, a.array[i])); */</span>
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+        
+        <p>Execute all tests.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">int</span> main(<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span>** argv) {
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Starting array io test\n"</span>);
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Testing load from ./gen util   "</span>);
+	test_evaluate(test_load_gen());
+	
+	test_end();
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

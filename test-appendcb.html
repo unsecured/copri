@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>test-appendcb.c</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>test-appendcb.c</h1>
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="array.html">
+                    array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="copri.html">
+                    copri.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="gen.html">
+                    gen.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-appendcb.html">
+                    test-appendcb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-array.html">
+                    test-array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-arrayio.html">
+                    test-arrayio.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cb.html">
+                    test-cb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbextend.html">
+                    test-cbextend.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbmerge.html">
+                    test-cbmerge.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-findfactor.html">
+                    test-findfactor.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppgpple.html">
+                    test-gcdppgpple.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppippo.html">
+                    test-gcdppippo.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-prod.html">
+                    test-prod.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-split.html">
+                    test-split.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-twopower.html">
+                    test-twopower.c
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>copri, Attacking RSA by factoring coprimes</p>
+<p>License: GNU Lesser General Public License (LGPL), version 3 or later
+See the lgpl.txt file in the root directory or <a href="https://www.gnu.org/licenses/lgpl">https://www.gnu.org/licenses/lgpl</a>.</p>
+
+        
+      
+        
+        <p>This is a test of <a href="copri.html">copri</a> <code>append_cb</code> function.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdlib.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdio.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;gmp.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "test.h"</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "copri.h"</span>
+
+<span class="hljs-keyword">int</span> tests_passed = <span class="hljs-number">0</span>;
+<span class="hljs-keyword">int</span> tests_failed = <span class="hljs-number">0</span>;</pre></div>
+        
+      
+        
+        <p><strong>TODO</strong>: Add an test. This function shows only the usage of <code>append_cb</code>.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">static</span> <span class="hljs-keyword">char</span> * test_multiple() {
+
+	mpz_t a;
+	mpz_t b;
+	mpz_array array1;
+	mpz_array array2;
+
+	array_init(&amp;array1, <span class="hljs-number">3</span>);
+	array_init(&amp;array2, <span class="hljs-number">3</span>);</pre></div>
+        
+      
+        
+        <p>primes: 139, 223, 317, 577, 727, 863
+<code>a = 139 * 223 * 317 * 577 = 5669630273</code>
+<code>b = 317 * 577 * 727 * 863 = 114757289509</code></p>
+
+        
+          <div class='highlight'><pre>	mpz_init_set_str(a, <span class="hljs-string">"5669630273"</span>, <span class="hljs-number">10</span>);
+	mpz_init_set_str(b, <span class="hljs-string">"114757289509"</span>, <span class="hljs-number">10</span>);
+
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"\n\nappend_cb(a, b)\n"</span>);
+	append_cb(&amp;array1, a, b);
+	array_print(&amp;array1);
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"\n"</span>);
+
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"\n\nappend_cb(b, a)\n"</span>);
+	append_cb(&amp;array2, b, a);
+	array_print(&amp;array2);
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"\n"</span>);</pre></div>
+        
+      
+        
+        <p><code>30997 = 139 * 223</code>
+<code>627401 = 727 * 863</code>
+<code>182909 = 317 * 577</code></p>
+
+        
+          <div class='highlight'><pre>
+	mpz_clear(a);
+	mpz_clear(b);
+	array_clear(&amp;array1);
+	array_clear(&amp;array2);
+
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+        
+        <p><strong>TODO</strong>: Add an test. This function shows only the usage of <code>append_cb</code>.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">static</span> <span class="hljs-keyword">char</span> * test_single() {
+
+	mpz_t a;
+	mpz_t b;
+	mpz_array array1;
+	mpz_array array2;
+
+	array_init(&amp;array1, <span class="hljs-number">3</span>);
+	array_init(&amp;array2, <span class="hljs-number">3</span>);</pre></div>
+        
+      
+        
+        <p>primes: 577, 727, 863
+<code>a = 727 * 577 = 419479</code>
+<code>b = 727 * 863 = 627401</code></p>
+
+        
+          <div class='highlight'><pre>	mpz_init_set_str(a, <span class="hljs-string">"419479"</span>, <span class="hljs-number">10</span>);
+	mpz_init_set_str(b, <span class="hljs-string">"627401"</span>, <span class="hljs-number">10</span>);
+
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"\n\nappend_cb(a, b)\n"</span>);
+	append_cb(&amp;array1, a, b);
+	<span class="hljs-keyword">if</span> (mpz_cmp_ui(a, <span class="hljs-number">419479</span>) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">"append_cb has changed the input value a!"</span>;
+	}
+	<span class="hljs-keyword">if</span> (mpz_cmp_ui(b, <span class="hljs-number">627401</span>) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">"append_cb has changed the input value b!"</span>;
+	}
+	array_print(&amp;array1);
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"\n"</span>);
+
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"\n\nappend_cb(b, a)\n"</span>);
+	append_cb(&amp;array2, b, a);
+	<span class="hljs-keyword">if</span> (mpz_cmp_ui(a, <span class="hljs-number">419479</span>) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">"append_cb has changed the input value a!"</span>;
+	}
+	<span class="hljs-keyword">if</span> (mpz_cmp_ui(b, <span class="hljs-number">627401</span>) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">"append_cb has changed the input value b!"</span>;
+	}
+	array_print(&amp;array2);
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"\n"</span>);
+
+	mpz_clear(a);
+	mpz_clear(b);
+	array_clear(&amp;array1);
+	array_clear(&amp;array2);
+
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+        
+        <p>Run all tests.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">int</span> main(<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span> **argv) {
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Starting append_cb test\n"</span>);
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Testing                        "</span>);
+	test_evaluate(test_multiple());
+	test_evaluate(test_single());
+
+	test_end();
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

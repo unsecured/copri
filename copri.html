@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>copri.c</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>copri.c</h1>
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="array.html">
+                    array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="copri.html">
+                    copri.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="gen.html">
+                    gen.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-appendcb.html">
+                    test-appendcb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-array.html">
+                    test-array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-arrayio.html">
+                    test-arrayio.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cb.html">
+                    test-cb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbextend.html">
+                    test-cbextend.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbmerge.html">
+                    test-cbmerge.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-findfactor.html">
+                    test-findfactor.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppgpple.html">
+                    test-gcdppgpple.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppippo.html">
+                    test-gcdppippo.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-prod.html">
+                    test-prod.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-split.html">
+                    test-split.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-twopower.html">
+                    test-twopower.c
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>copri, Attacking RSA by factoring coprimes</p>
+<p>License: GNU Lesser General Public License (LGPL), version 3 or later
+See the lgpl.txt file in the root directory or <a href="https://www.gnu.org/licenses/lgpl">https://www.gnu.org/licenses/lgpl</a>.</p>
+
+        
+      
+        
+        <p>Implementation of “Factoring into coprimes in essentially linear time”.</p>
+
+        
+      
+        
+        <h1 id="algorithm">algorithm</h1>
+
+        
+          <div class='highlight'><pre><span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdlib.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdio.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;unistd.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;gmp.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "copri.h"</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "config.h"</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">if</span> USE_OPENMP</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;omp.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">endif</span></span></pre></div>
+        
+      
+        
+        <h3 id="compute-a-2-n-">Compute a^2^n.</h3>
+
+        
+      
+        
+        <p>The result is stored in the parameter <code>mpz_t rot</code>.
+This parameter has to be <strong>initialized</strong> on invocation.
+The function operates on a single (input &amp; output) integer.</p>
+<p>Algorithm 10.1 <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 13</a></p>
+<p>See <a href="test-twopower.html">twopower test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> two_power(mpz_t rot, <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> <span class="hljs-keyword">long</span> n) {
+	<span class="hljs-keyword">while</span>(n &gt; <span class="hljs-number">0</span>) {
+		mpz_mul(rot, rot, rot);
+		n--;
+	}
+}</pre></div>
+        
+      
+        
+        <h3 id="compute-gcd-ppi-and-ppo">Compute gcd, ppi and ppo</h3>
+
+        
+      
+        
+        <pre><code>gcd = gcd(a,b)  greatest common divisor
+ppi = ppi(a,b)  powers in a of primes inside b
+ppo = ppo(a,b)  powers in a of primes outside b
+</code></pre><p>Algorithm 11.3 <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 14</a></p>
+<p>See <a href="test-gcdppippo.html">gcdppippo test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> gcd_ppi_ppo(mpz_t gcd, mpz_t ppi, mpz_t ppo, <span class="hljs-keyword">const</span> mpz_t a, <span class="hljs-keyword">const</span> mpz_t b) {
+	mpz_t g;
+	mpz_init(g);
+	mpz_gcd(ppi, a, b);
+	mpz_set(gcd, ppi);
+	mpz_fdiv_q(ppo, a, ppi);
+	<span class="hljs-keyword">while</span>(<span class="hljs-number">1</span>) {
+		mpz_gcd(g, ppi, ppo);
+		<span class="hljs-keyword">if</span> (mpz_cmp_ui(g, <span class="hljs-number">1</span>) == <span class="hljs-number">0</span>) {
+			mpz_clear(g);
+			<span class="hljs-keyword">return</span>;
+		}
+		mpz_mul(ppi, ppi, g);
+		mpz_fdiv_q(ppo, ppo, g);
+	}
+}</pre></div>
+        
+      
+        
+        <h4 id="shortcuts">Shortcuts</h4>
+
+        
+      
+        
+        <p>Compute ppi and ppo. Ingore gcd.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> ppi_ppo(mpz_t ppi, mpz_t ppo, <span class="hljs-keyword">const</span> mpz_t a, <span class="hljs-keyword">const</span> mpz_t c) {
+	mpz_t gcd;
+	mpz_init(gcd);
+	gcd_ppi_ppo(gcd, ppi, ppo, a, c);
+	mpz_clear(gcd);
+}</pre></div>
+        
+      
+        
+        <p>Compute ppi. Ingore gcd and ppo.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> ppi(mpz_t ppi, <span class="hljs-keyword">const</span> mpz_t a, <span class="hljs-keyword">const</span> mpz_t c) {
+	mpz_t gcd;
+	mpz_t ppo;
+	mpz_init(gcd);
+	mpz_init(ppo);
+	gcd_ppi_ppo(gcd, ppi, ppo, a, c);
+	mpz_clear(gcd);
+	mpz_clear(ppo);
+}</pre></div>
+        
+      
+        
+        <h3 id="compute-gcd-ppg-and-pple">Compute gcd, ppg and pple</h3>
+
+        
+      
+        
+        <pre><code>gcd  =  gcd(a,b)  greatest common divisor
+ppg  =  ppg(a,b)  prime powers in a greater than those in b
+pple = pple(a,b)  prime powers in a less than or equal to those in b
+</code></pre><p>Algorithm 11.4 <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 14</a></p>
+<p>See <a href="test-gcdppgpple.html">gcdppgpple test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> gcd_ppg_pple(mpz_t gcd, mpz_t ppg, mpz_t pple, <span class="hljs-keyword">const</span> mpz_t a, <span class="hljs-keyword">const</span> mpz_t b) {
+	mpz_t g;
+	mpz_init(g);
+	mpz_gcd(pple, a, b);
+	mpz_set(gcd, pple);
+	mpz_fdiv_q(ppg, a, pple);
+	<span class="hljs-keyword">while</span>(<span class="hljs-number">1</span>) {
+		mpz_gcd(g, ppg, pple);
+		<span class="hljs-keyword">if</span> (mpz_cmp_ui(g, <span class="hljs-number">1</span>) == <span class="hljs-number">0</span>) {
+			mpz_clear(g);
+			<span class="hljs-keyword">return</span>;
+		}
+		mpz_mul(ppg, ppg, g);
+		mpz_fdiv_q(pple, pple, g);
+	}
+}</pre></div>
+        
+      
+        
+        <h3 id="adds-cb-a-b-to-the-array-">Adds cb{a,b} to the array.</h3>
+
+        
+      
+        
+        <p>Algorithm 13.2 <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 17</a></p>
+<p>See <a href="test-appendcb.html">appendcb test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> append_cb(mpz_array *out, <span class="hljs-keyword">const</span> mpz_t a, <span class="hljs-keyword">const</span> mpz_t b) {
+
+	mpz_t r, g, h, c, c0, x, y, d, b1, b2, a1;
+	<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> <span class="hljs-keyword">long</span> n;
+
+	<span class="hljs-comment">/* gmp_printf("enter append_cb(%Zd, %Zd)\n", a, b); */</span></pre></div>
+        
+      
+        
+        <p><strong>Step 1</strong></p>
+<p>If <code>b == 1</code> and <code>a == 1</code> add <code>a</code> to the array. If <code>b == 1</code> return.
+This is the break condition of the recursive function.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (mpz_cmp_ui(b, <span class="hljs-number">1</span>) == <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">if</span> (mpz_cmp_ui(a, <span class="hljs-number">1</span>) != <span class="hljs-number">0</span>)  {
+			array_add(out, a);
+		}
+		<span class="hljs-keyword">return</span>;
+	}
+
+	mpz_init(r);
+	mpz_init(g);
+	mpz_init(a1);</pre></div>
+        
+      
+        
+        <p><strong>Step 2</strong></p>
+<p>Store ppi in <code>a1</code> and ppo in <code>r</code>. Use <code>a1</code> and not <code>a</code> to keep the input <code>const</code>
+and handle the case that one parameter is used twice.</p>
+
+        
+          <div class='highlight'><pre>	ppi_ppo(a1, r, a, b);</pre></div>
+        
+      
+        
+        <p><strong>Step 3</strong></p>
+<p>If <code>r</code> (ppo) is <strong>not</strong> one add it to the array.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (mpz_cmp_ui(r, <span class="hljs-number">1</span>) != <span class="hljs-number">0</span>) {
+		array_add(out, r);
+	}
+
+	mpz_init(h);
+	mpz_init(c);</pre></div>
+        
+      
+        
+        <p><strong>Step 4</strong></p>
+<p>Caluclate the gcd, ppg and pple.</p>
+
+        
+          <div class='highlight'><pre>	gcd_ppg_pple(g, h, c, a1, b);</pre></div>
+        
+      
+        
+        <p><strong>Step 5</strong></p>
+<p>Store pple in <code>c0</code> and <code>x</code>.</p>
+
+        
+          <div class='highlight'><pre>	mpz_init_set(c0, c);
+	mpz_init_set(x, c0);</pre></div>
+        
+      
+        
+        <p><strong>Step 6</strong></p>
+<p>Set <code>n</code> to one.</p>
+
+        
+          <div class='highlight'><pre>	n = <span class="hljs-number">1</span>;
+
+	mpz_init(b1);
+	mpz_init(b2);
+	mpz_init(d);
+	mpz_init(y);</pre></div>
+        
+      
+        
+        <p>Start while loop to be able to return to step 7.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">while</span>(<span class="hljs-number">1</span>) {</pre></div>
+        
+      
+        
+        <p><strong>Step 7</strong></p>
+<p>Compute (g, h, c) ← (gcd,ppg,pple)(h,g^2)</p>
+
+        
+          <div class='highlight'><pre>		mpz_mul(b1, g, g);
+		mpz_set(b2, h);
+		gcd_ppg_pple(g, h, c, b2, b1);</pre></div>
+        
+      
+        
+        <p><strong>Step 8</strong></p>
+<p>Compute d ← gcd(c, b)</p>
+
+        
+          <div class='highlight'><pre>		mpz_gcd(d, c, b);</pre></div>
+        
+      
+        
+        <p><strong>Step 9</strong></p>
+<p>Set x ← xd</p>
+
+        
+          <div class='highlight'><pre>		mpz_mul(x, x, d);</pre></div>
+        
+      
+        
+        <p><strong>Sep 10</strong></p>
+<p>Compute y ← d^2^    n−1.</p>
+
+        
+          <div class='highlight'><pre>		mpz_set(y, d);
+		two_power(y, n - <span class="hljs-number">1</span>);</pre></div>
+        
+      
+        
+        <p><strong>Sep 11</strong></p>
+<p>Recursively apply (c/y,d).</p>
+
+        
+          <div class='highlight'><pre>		mpz_fdiv_q(b1, c, y);
+
+		<span class="hljs-comment">/* gmp_printf("rec call append_cb(%Zd, %Zd)\n", b1, d); */</span>
+
+		append_cb(out, b1, d);</pre></div>
+        
+      
+        
+        <p><strong>Sep 12</strong></p>
+<p>If h is not 1: Set n ← n+1. Return to Step 7.</p>
+
+        
+          <div class='highlight'><pre>		<span class="hljs-keyword">if</span> (mpz_cmp_ui(h, <span class="hljs-number">1</span>) == <span class="hljs-number">0</span>) <span class="hljs-keyword">break</span>;
+		n = n + <span class="hljs-number">1</span>;
+	}</pre></div>
+        
+      
+        
+        <p><strong>Step 13</strong></p>
+<p>Recursively apply (b/x, c0).</p>
+
+        
+          <div class='highlight'><pre>	mpz_fdiv_q(b1, b, x);
+	append_cb(out, b1, c0);</pre></div>
+        
+      
+        
+        <p>Free the memory.</p>
+
+        
+          <div class='highlight'><pre>	mpz_clear(r);
+	mpz_clear(g);
+	mpz_clear(h);
+	mpz_clear(c);
+	mpz_clear(c0);
+	mpz_clear(x);
+	mpz_clear(y);
+	mpz_clear(d);
+	mpz_clear(b1);
+	mpz_clear(b2);
+	mpz_clear(a1);
+}</pre></div>
+        
+      
+        
+        <h3 id="compute-the-product-of-an-array-">Compute the product of an array.</h3>
+
+        
+      
+        
+        <p>Compute the product of the values in <code>mpz_t array</code> and store it in <code>mpz_t rot</code>.
+<code>size_t from</code> is the start index and <code>size_t to</code> is the end index.</p>
+<p>This function expects initialized mpz integers in all array fields between <code>from</code> and <code>to</code>.</p>
+<p>Algorithm 14.1 <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 19</a></p>
+<p>See <a href="test-prod.html">prod test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> prod(mpz_t rot, mpz_t * <span class="hljs-built_in">array</span>, size_t from, size_t to) {
+	size_t n = to - from;
+	mpz_t x, y;</pre></div>
+        
+      
+        
+        <p> If #S = 1: Find a ∈ S. Print a. Stop.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (n == <span class="hljs-number">0</span>) {
+		mpz_set(rot, <span class="hljs-built_in">array</span>[from]);
+		<span class="hljs-keyword">return</span>;
+	}</pre></div>
+        
+      
+        
+        <p>Select T ⊆ S with #T = b#S/2c.</p>
+<p>Compute X ← prod(T).</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(x);
+	prod(x, <span class="hljs-built_in">array</span>, from, to - n/<span class="hljs-number">2</span> - <span class="hljs-number">1</span>);</pre></div>
+        
+      
+        
+        <p>Compute Y ← prod(S−T).</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(y);
+	prod(y, <span class="hljs-built_in">array</span>, to - n/<span class="hljs-number">2</span>, to);</pre></div>
+        
+      
+        
+        <p>Print XY.</p>
+
+        
+          <div class='highlight'><pre>	mpz_mul(rot, x, y);</pre></div>
+        
+      
+        
+        <p>Free the memory.</p>
+
+        
+          <div class='highlight'><pre>	mpz_clear(x);
+	mpz_clear(y);
+}</pre></div>
+        
+      
+        
+        <h4 id="array-verison">array verison</h4>
+<p>Compute product of an <code>mpz_array</code> and store it in <code>mpz_t rot</code>.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> array_prod(mpz_array *a, mpz_t rot) {
+	<span class="hljs-keyword">if</span> (a-&gt;used &gt; <span class="hljs-number">0</span>)
+		prod(rot, a-&gt;<span class="hljs-built_in">array</span>, <span class="hljs-number">0</span>, a-&gt;used-<span class="hljs-number">1</span>);
+	<span class="hljs-keyword">else</span> {
+		mpz_set_ui(rot, <span class="hljs-number">1</span>);
+	}
+}</pre></div>
+        
+      
+        
+        <h3 id="fast-algorithm-to-compute-split-a-p-">fast algorithm to compute split(a,P).</h3>
+
+        
+      
+        
+        <p>This function expects initialized mpz integers in all array fields between <code>from</code> and <code>to</code>.</p>
+<p>Algorithm 15.3 <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 20</a></p>
+<p>See <a href="test-split.html">split test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> split(mpz_array *ret, <span class="hljs-keyword">const</span> mpz_t a, mpz_t *p, size_t from, size_t to) {
+	mpz_t b, x;
+	size_t n = to - from;</pre></div>
+        
+      
+        
+        <p><strong>Sep 2</strong></p>
+<p> Compute b ← ppi(a,prodP)</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(x);
+	mpz_init(b);
+	prod(x, p, from, to);
+	ppi(b, a, x);
+	mpz_clear(x);</pre></div>
+        
+      
+        
+        <p><strong>Sep 2</strong></p>
+<p> If #P = 1: find p ∈ P, print (p,b), and stop</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (n == <span class="hljs-number">0</span>) {
+		array_add(ret, b);
+		mpz_clear(b);
+		<span class="hljs-keyword">return</span>;
+	}</pre></div>
+        
+      
+        
+        <p><strong>Sep 3</strong></p>
+<p> Select Q ⊆ P with #Q = b#P/2c.</p>
+
+        
+          <div class='highlight'><pre>	split(ret, b, p, from, to - n/<span class="hljs-number">2</span> - <span class="hljs-number">1</span>);
+	split(ret, b, p, to - n/<span class="hljs-number">2</span>, to);</pre></div>
+        
+      
+        
+        <p>Free the memory.</p>
+
+        
+          <div class='highlight'><pre>	mpz_clear(b);
+}</pre></div>
+        
+      
+        
+        <h4 id="array-verison">array verison</h4>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> array_split(mpz_array *ret, <span class="hljs-keyword">const</span> mpz_t a, mpz_array *p) {
+	<span class="hljs-keyword">if</span> (p-&gt;used &gt; <span class="hljs-number">0</span>)
+		split(ret, a, p-&gt;<span class="hljs-built_in">array</span>, <span class="hljs-number">0</span>, p-&gt;used-<span class="hljs-number">1</span>);
+	<span class="hljs-keyword">else</span>
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"array_split on empty array\n"</span>);
+}</pre></div>
+        
+      
+        
+        <h3 id="extending-a-coprime-base">Extending a coprime base</h3>
+
+        
+      
+        
+        <p>This algorithm finds cb(P∪{b}) when P is coprime.</p>
+<p>Algorithm 16.2  <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 21</a></p>
+<p>See <a href="test-cbextend.html">cbextend test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> cbextend(mpz_array *ret, mpz_array *p, <span class="hljs-keyword">const</span> mpz_t b) {
+	size_t i;
+	mpz_t x, a, r;
+	mpz_array s;</pre></div>
+        
+      
+        
+        <p><strong>Sep 1</strong></p>
+<p> If P = {}: Print b if b != 1. Stop.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (!p-&gt;used) {
+		<span class="hljs-keyword">if</span> (mpz_cmp_ui(b, <span class="hljs-number">1</span>) != <span class="hljs-number">0</span>) {
+			array_add(ret, b);
+		}
+	}</pre></div>
+        
+      
+        
+        <p><strong>Sep 2</strong></p>
+<p> Compute x ← prod P</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(x);
+	array_prod(p, x);</pre></div>
+        
+      
+        
+        <p><strong>Sep 3</strong></p>
+<p>  Compute (a,r) ← (ppi,ppo)(b, x) b</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(a);
+	mpz_init(r);
+	ppi_ppo(a, r, b, x);</pre></div>
+        
+      
+        
+        <p><strong>Sep 4</strong></p>
+<p>  Print r if r != 1.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (mpz_cmp_ui(r, <span class="hljs-number">1</span>) != <span class="hljs-number">0</span>) {
+		array_add(ret, r);
+	}</pre></div>
+        
+      
+        
+        <p><strong>Sep 5</strong></p>
+<p>  Compute S ← split(a,P)</p>
+
+        
+          <div class='highlight'><pre>	array_init(&amp;s, p-&gt;used);
+	array_split(&amp;s, a, p);</pre></div>
+        
+      
+        
+        <p><strong>Sep 6</strong></p>
+<p>  For each (p, c) ∈ S: Apply append_cb(p, c).</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (p-&gt;used != s.used) {
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"logic error in cbextend: p.used != s.used"</span>);
+	} <span class="hljs-keyword">else</span> {
+		<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; p-&gt;used; i++) {
+			append_cb(ret, p-&gt;<span class="hljs-built_in">array</span>[i], s.<span class="hljs-built_in">array</span>[i]);
+		}
+	}</pre></div>
+        
+      
+        
+        <p>Free the memory.</p>
+
+        
+          <div class='highlight'><pre>	array_clear(&amp;s);
+	mpz_clear(a);
+	mpz_clear(r);
+	mpz_clear(x);
+}</pre></div>
+        
+      
+        
+        <h4 id="bit-test-util">bit test util</h4>
+
+        
+      
+        
+        <p>see <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 22</a></p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">int</span> bit(size_t i, size_t k) {
+	<span class="hljs-keyword">if</span> (k &amp; (<span class="hljs-number">1</span> &lt;&lt; i)) <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+        
+        <h3 id="merging-coprime-bases">Merging coprime bases</h3>
+
+        
+      
+        
+        <p>This algorithm finds cb(P ∪ Q) if P is coprime and Q is coprime</p>
+<p>Algorithm 17.3  <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 23</a></p>
+<p>See <a href="test-cbmerge.html">cbmerge test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> cbmerge(mpz_array *s, mpz_array *p, mpz_array *q) {
+	mpz_array t; <span class="hljs-comment">// T</span>
+	mpz_array r; <span class="hljs-comment">// buffer for q_k : bit_i k = 0 and q_k : bit_i k = 1</span>
+	size_t n = q-&gt;used;
+	size_t b = <span class="hljs-number">0</span>;
+	size_t i = <span class="hljs-number">0</span>;
+	size_t k = <span class="hljs-number">0</span>;
+	mpz_t x; <span class="hljs-comment">// buffer</span>
+	mpz_init(x);</pre></div>
+        
+      
+        
+        <p>Find the smallest b ≥ 1 with 2^b.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">do</span> {
+		b++;
+		mpz_ui_pow_ui(x, <span class="hljs-number">2</span>, b);
+	} <span class="hljs-keyword">while</span>(mpz_cmp_ui(x, n) &lt; <span class="hljs-number">0</span>);</pre></div>
+        
+      
+        
+        <p>Set S ← P.</p>
+
+        
+          <div class='highlight'><pre>	array_copy(s, p);
+
+	<span class="hljs-keyword">while</span>(<span class="hljs-number">1</span>) {</pre></div>
+        
+      
+        
+        <p>If i = b: Print S. Stop.</p>
+
+        
+          <div class='highlight'><pre>		<span class="hljs-keyword">if</span> (i == b) {
+			mpz_clear(x);
+			<span class="hljs-keyword">return</span>;
+		}</pre></div>
+        
+      
+        
+        <p>Find R ← {qk : bit(k) = 1}</p>
+
+        
+          <div class='highlight'><pre>		array_init(&amp;r, n);
+		<span class="hljs-keyword">for</span>(k=<span class="hljs-number">0</span>; k&lt;n; k++) {
+			<span class="hljs-keyword">if</span> (!bit(i,k)) array_add(&amp;r, q-&gt;<span class="hljs-built_in">array</span>[k]);
+		}</pre></div>
+        
+      
+        
+        <p>Compute x ← prod{R}</p>
+
+        
+          <div class='highlight'><pre>		array_prod(&amp;r, x);</pre></div>
+        
+      
+        
+        <p>Compute T ← cbextend(S ∪ {x})</p>
+
+        
+          <div class='highlight'><pre>		array_init(&amp;t, s-&gt;size);
+		cbextend(&amp;t, s, x);</pre></div>
+        
+      
+        
+        <p>Find R ← {qk : bit(k) = 1}</p>
+
+        
+          <div class='highlight'><pre>		array_clear(&amp;r);
+		array_init(&amp;r, n);
+		<span class="hljs-keyword">for</span>(k=<span class="hljs-number">0</span>; k&lt;n; k++) {
+			<span class="hljs-keyword">if</span> (bit(i,k)) array_add(&amp;r, q-&gt;<span class="hljs-built_in">array</span>[k]);
+		}</pre></div>
+        
+      
+        
+        <p>Compute x ← prod{R}</p>
+
+        
+          <div class='highlight'><pre>		array_prod(&amp;r, x);</pre></div>
+        
+      
+        
+        <p>Compute S ← cbextend(T ∪ {x})</p>
+
+        
+          <div class='highlight'><pre>		array_clear(s);
+		array_init(s, s-&gt;size);
+		cbextend(s, &amp;t, x);</pre></div>
+        
+      
+        
+        <p>Free the memory.</p>
+
+        
+          <div class='highlight'><pre>		array_clear(&amp;r);
+		array_clear(&amp;t);
+		i++;
+	}
+}</pre></div>
+        
+      
+        
+        <h3 id="computing-a-coprime-base-for-a-finite-set">Computing a coprime base for a finite set</h3>
+
+        
+      
+        
+        <p>This algorithm computes the natural coprime base for any finite subset of a free coid.
+It uses <code>cbmerge</code> to merge coprime bases for halves of the set.</p>
+<p>Algorithm 18.1 <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 24</a></p>
+<p>See <a href="test-cb.html">cb test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> cb(mpz_array *ret, mpz_t *s, size_t from, size_t to) {
+	size_t n = to - from;
+	mpz_array p, q;</pre></div>
+        
+      
+        
+        <p>If #S = 1: Find a ∈ S. Print a if a != 1. Stop.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (n == <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">if</span> (mpz_cmp_ui(s[from], <span class="hljs-number">0</span>) == <span class="hljs-number">0</span>) {
+			<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"warning adding 0 in cb\n"</span>);
+		} <span class="hljs-keyword">else</span> {
+			<span class="hljs-keyword">if</span> (mpz_cmp_ui(s[from], <span class="hljs-number">1</span>) != <span class="hljs-number">0</span>) {
+				array_add(ret, s[from]);
+			}
+		}
+		<span class="hljs-keyword">return</span>;
+	}</pre></div>
+        
+      
+        
+        <h2 id="openmp-multithreading">OpenMP multithreading</h2>
+<p>Execute both recrusive <code>cb</code> calls in parallel.</p>
+<p><code>export OMP_NUM_THREADS=4</code> to set the maximal thread number.</p>
+
+        
+          <div class='highlight'><pre>	array_init(&amp;p, n);
+	array_init(&amp;q, n);
+<span class="hljs-preprocessor">#<span class="hljs-keyword">if</span> USE_OPENMP</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">pragma</span> omp parallel sections</span>
+{
+ <span class="hljs-preprocessor">#<span class="hljs-keyword">pragma</span> omp section</span>
+ {
+	cb(&amp;p, s, from, to - n/<span class="hljs-number">2</span> - <span class="hljs-number">1</span>);
+ }
+ <span class="hljs-preprocessor">#<span class="hljs-keyword">pragma</span> omp section</span>
+ {
+	cb(&amp;q, s, to - n/<span class="hljs-number">2</span>, to);
+ }
+}
+<span class="hljs-preprocessor">#<span class="hljs-keyword">else</span></span>
+	cb(&amp;p, s, from, to - n/<span class="hljs-number">2</span> - <span class="hljs-number">1</span>);
+	cb(&amp;q, s, to - n/<span class="hljs-number">2</span>, to);
+<span class="hljs-preprocessor">#<span class="hljs-keyword">endif</span></span></pre></div>
+        
+      
+        
+        <p>Print cbmerge(P∪Q)</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (q.used &amp;&amp; p.used) {
+		cbmerge(ret, &amp;p, &amp;q);
+	} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(!q.used &amp;&amp; p.used) {
+		array_copy(ret, &amp;p);
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"warning: q is empty in cb\n"</span>);
+	} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(q.used &amp;&amp; !p.used) {
+		array_copy(ret, &amp;q);
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"warning: p is empty in cb\n"</span>);
+	} <span class="hljs-keyword">else</span> {
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"warning: p an q are empty in cb\n"</span>);
+	}</pre></div>
+        
+      
+        
+        <p>Free the memory.</p>
+
+        
+          <div class='highlight'><pre>	array_clear(&amp;p);
+	array_clear(&amp;q);
+}</pre></div>
+        
+      
+        
+        <h4 id="array-verison">array verison</h4>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> array_cb(mpz_array *ret, mpz_array *s) {
+	<span class="hljs-keyword">if</span> (s-&gt;used &gt; <span class="hljs-number">0</span>)
+		cb(ret, s-&gt;<span class="hljs-built_in">array</span>, <span class="hljs-number">0</span>, s-&gt;used-<span class="hljs-number">1</span>);
+	<span class="hljs-keyword">else</span>
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"array_cb on empty array\n"</span>);
+}</pre></div>
+        
+      
+        
+        <h3 id="the-reduce-function">The reduce function</h3>
+
+        
+      
+        
+        <p>Algorithm 19.2  <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 24</a></p>
+<p>See <a href="test-reduce.html">reduce test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> reduce(mpz_t i, mpz_t pai, <span class="hljs-keyword">const</span> mpz_t p, <span class="hljs-keyword">const</span> mpz_t a) {
+	mpz_t r, j, b, p2, a2;</pre></div>
+        
+      
+        
+        <p><strong>Sep 1</strong></p>
+<p> If p does not divide a: Print (0,a) and stop.</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(r);
+	mpz_fdiv_r(r, a, p);
+	<span class="hljs-keyword">if</span> (mpz_cmp_ui(r, <span class="hljs-number">0</span>) != <span class="hljs-number">0</span>) {
+		mpz_clear(r);
+		mpz_set_ui(i, <span class="hljs-number">0</span>);
+		mpz_set(pai, a);
+		<span class="hljs-keyword">return</span>;
+	}</pre></div>
+        
+      
+        
+        <p><strong>Sep 2</strong></p>
+<p> Compute (j,b) ← reduce(p^2 ,a/p)</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(j);
+	mpz_init(b);
+	mpz_init(p2);
+	mpz_init(a2);
+	mpz_mul(p2, p, p);
+	mpz_fdiv_q(a2, a, p);
+	reduce(j, b, p2, a2);
+	mpz_clear(p2);
+	mpz_clear(a2);</pre></div>
+        
+      
+        
+        <p><strong>Sep 3</strong></p>
+<p> If p divides b: Print (2 j +2,b/p) and stop.</p>
+
+        
+          <div class='highlight'><pre>	mpz_fdiv_r(r, b, p);
+	<span class="hljs-keyword">if</span> (mpz_cmp_ui(r, <span class="hljs-number">0</span>) == <span class="hljs-number">0</span>) {
+		mpz_mul_ui(j, j, <span class="hljs-number">2</span>);
+		mpz_add_ui(j, j, <span class="hljs-number">2</span>);
+		mpz_set(i, j);
+
+		mpz_fdiv_q(b, b, p);
+		mpz_set(pai, b);
+
+		mpz_clear(r);
+		mpz_clear(b);
+		mpz_clear(j);
+		<span class="hljs-keyword">return</span>;
+	}
+	mpz_clear(r);</pre></div>
+        
+      
+        
+        <p><strong>Sep 4</strong></p>
+<p> Print (2 j +1,b).</p>
+
+        
+          <div class='highlight'><pre>	mpz_mul_ui(j, j, <span class="hljs-number">2</span>);
+	mpz_add_ui(j, j, <span class="hljs-number">1</span>);
+	mpz_set(i, j);
+	mpz_set(pai, b);</pre></div>
+        
+      
+        
+        <p>Free the memory.</p>
+
+        
+          <div class='highlight'><pre>	mpz_clear(b);
+	mpz_clear(j);
+}</pre></div>
+        
+      
+        
+        <h3 id="factoring-over-a-coprime-base">Factoring over a coprime base</h3>
+
+        
+      
+        
+        <p>This algorithm factors a as a product of powers of elements of P if possible; otherwise it
+proclaims failure.</p>
+<p>Algorithm 20.1  <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 25</a></p>
+<p>See <a href="test-findfactor.html">findfactor test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">int</span> find_factor(mpz_array *out, <span class="hljs-keyword">const</span> mpz_t a0, <span class="hljs-keyword">const</span> mpz_t a, mpz_t *p, size_t from, size_t to) {
+	mpz_t m, c, y, b, c2;
+	size_t n = to - from;
+	<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> r = <span class="hljs-number">1</span>;</pre></div>
+        
+      
+        
+        <p>If #P = 1: Find p ∈ P. Compute (n, c) ← reduce(p,a) by Algorithm 19.2. If
+c != 1, proclaim failure and stop. Otherwise print (p,n) and stop</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (n == <span class="hljs-number">0</span>) {
+		mpz_init(m);
+		mpz_init(c);
+		reduce(m, c, p[from], a);
+		<span class="hljs-keyword">if</span> (mpz_cmp_ui(c, <span class="hljs-number">1</span>) != <span class="hljs-number">0</span>) {
+			r = <span class="hljs-number">0</span>;
+		} <span class="hljs-keyword">else</span> {
+			<span class="hljs-keyword">if</span> (mpz_cmp(a0, p[from]) != <span class="hljs-number">0</span>) {
+				mpz_init(y);
+				mpz_fdiv_q(y, a0, p[from]);
+				array_add(out, a0);
+				array_add(out, p[from]);
+				array_add(out, y);
+				mpz_clear(y);
+				r = <span class="hljs-number">0</span>;
+			}
+		}
+		mpz_clear(m);
+		mpz_clear(c);
+		<span class="hljs-keyword">return</span> r;
+	}</pre></div>
+        
+      
+        
+        <p>Select Q ⊆ P with #Q = b#P/2c.</p>
+
+        
+      
+        
+        <p>Compute y ← prod Q</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(y);
+	prod(y, p, from, to - n/<span class="hljs-number">2</span> - <span class="hljs-number">1</span>);</pre></div>
+        
+      
+        
+        <p>Compute (b, c) ← (ppi,ppo)(a, y)</p>
+
+        
+          <div class='highlight'><pre>	mpz_init(b);
+	mpz_init(c2);
+	ppi_ppo(b, c2, a, y);</pre></div>
+        
+      
+        
+        <p>Apply Algorithm 20.1 to (b,Q) recursively. If Algorithm 20.1 fails, proclaim
+failure and stop.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (!find_factor(out, a0, b, p, from, to - n/<span class="hljs-number">2</span> - <span class="hljs-number">1</span>)) {
+		r = <span class="hljs-number">0</span>;</pre></div>
+        
+      
+        
+        <p>Apply Algorithm 20.1 to (c,P−Q) recursively. If Algorithm 20.1 fails, proclaim
+failure and stop.</p>
+
+        
+          <div class='highlight'><pre>	} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (!find_factor(out, a0, c2, p, to - n/<span class="hljs-number">2</span>, to)) {
+		r = <span class="hljs-number">0</span>;
+	}</pre></div>
+        
+      
+        
+        <p>Free the memory.</p>
+
+        
+          <div class='highlight'><pre>	mpz_clear(y);
+	mpz_clear(b);
+	mpz_clear(c2);
+	<span class="hljs-keyword">return</span> r;
+}</pre></div>
+        
+      
+        
+        <h4 id="array-verison">array verison</h4>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">int</span> array_find_factor(mpz_array *out, <span class="hljs-keyword">const</span> mpz_t a, mpz_array *p) {
+	<span class="hljs-keyword">if</span> (p-&gt;used &gt; <span class="hljs-number">0</span>)
+		<span class="hljs-keyword">return</span> find_factor(out, a, a, p-&gt;<span class="hljs-built_in">array</span>, <span class="hljs-number">0</span>, p-&gt;used-<span class="hljs-number">1</span>);
+	<span class="hljs-keyword">else</span> {
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"array_printfactors on empty array\n"</span>);
+		<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+	}
+}</pre></div>
+        
+      
+        
+        <h3 id="factoring-a-set-over-a-coprime-base">Factoring a set over a coprime base</h3>
+
+        
+      
+        
+        <p>This algorithm factors each element a ∈ S over P if P is a base for S; otherwise it proclaims failure.</p>
+<p>Algorithm 21.2  <a href="http://cr.yp.to/lineartime/dcba-20040404.pdf">PDF page 27</a></p>
+<p>See <a href="test-findfactors.html">findfactors test</a> for basic usage.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> find_factors(mpz_array *out, mpz_t *s, size_t from, size_t to, mpz_array *p) {
+	mpz_t x, y, z;
+	mpz_array d, q;
+	size_t i, n = to - from;
+
+	mpz_init(x);
+	array_prod(p, x);
+
+	mpz_init(y);
+	prod(y, s, from, to);
+
+	mpz_init(z);
+	ppi(z, x, y);
+
+	array_init(&amp;d, p-&gt;size);
+	array_split(&amp;d, z, p);
+
+	array_init(&amp;q, p-&gt;size);
+	<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; p-&gt;used; i++) {
+		<span class="hljs-keyword">if</span> (mpz_cmp(d.<span class="hljs-built_in">array</span>[i], p-&gt;<span class="hljs-built_in">array</span>[i]) == <span class="hljs-number">0</span>)
+			array_add(&amp;q, p-&gt;<span class="hljs-built_in">array</span>[i]);
+	}
+
+	<span class="hljs-keyword">if</span> (n == <span class="hljs-number">0</span>) {
+		array_find_factor(out, y, &amp;q);
+	} <span class="hljs-keyword">else</span> {
+		find_factors(out, s, from, to - n/<span class="hljs-number">2</span> - <span class="hljs-number">1</span>, &amp;q);
+		find_factors(out, s, to - n/<span class="hljs-number">2</span>, to, &amp;q);
+	}
+
+	mpz_clear(x);
+	mpz_clear(y);
+	mpz_clear(z);
+	array_clear(&amp;d);
+	array_clear(&amp;q);
+}</pre></div>
+        
+      
+        
+        <h4 id="array-verison">array verison</h4>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">void</span> array_find_factors(mpz_array *out, mpz_array *s, mpz_array *p) {
+	<span class="hljs-keyword">if</span> (s-&gt;used &gt; <span class="hljs-number">0</span>)
+		find_factors(out, s-&gt;<span class="hljs-built_in">array</span>, <span class="hljs-number">0</span>, s-&gt;used-<span class="hljs-number">1</span>, p);
+	<span class="hljs-keyword">else</span>
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"array_printfactors_set on empty array\n"</span>);
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

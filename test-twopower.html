@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>test-twopower.c</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>test-twopower.c</h1>
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="array.html">
+                    array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="copri.html">
+                    copri.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="gen.html">
+                    gen.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-appendcb.html">
+                    test-appendcb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-array.html">
+                    test-array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-arrayio.html">
+                    test-arrayio.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cb.html">
+                    test-cb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbextend.html">
+                    test-cbextend.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbmerge.html">
+                    test-cbmerge.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-findfactor.html">
+                    test-findfactor.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppgpple.html">
+                    test-gcdppgpple.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppippo.html">
+                    test-gcdppippo.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-prod.html">
+                    test-prod.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-split.html">
+                    test-split.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-twopower.html">
+                    test-twopower.c
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>copri, Attacking RSA by factoring coprimes</p>
+<p>License: GNU Lesser General Public License (LGPL), version 3 or later
+See the lgpl.txt file in the root directory or <a href="https://www.gnu.org/licenses/lgpl">https://www.gnu.org/licenses/lgpl</a>.</p>
+
+        
+      
+        
+        <p>This is a test of <a href="copri.html">copri</a> <code>two_power</code> function.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdlib.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdio.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;gmp.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "test.h"</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "copri.h"</span>
+
+<span class="hljs-keyword">int</span> tests_passed = <span class="hljs-number">0</span>;
+<span class="hljs-keyword">int</span> tests_failed = <span class="hljs-number">0</span>;</pre></div>
+        
+      
+        
+        <p>Compute a^2^n and compare it to <code>expect</code>.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">static</span> <span class="hljs-keyword">char</span> * test(<span class="hljs-keyword">char</span> * a, <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> <span class="hljs-keyword">long</span> n, <span class="hljs-keyword">char</span> * expect) {
+	mpz_t v;
+	mpz_t e;</pre></div>
+        
+      
+        
+        <p>Initialize <code>v</code> and <code>e</code>.</p>
+
+        
+          <div class='highlight'><pre>	mpz_init_set_str(v, a, <span class="hljs-number">10</span>);
+	mpz_init_set_str(e, expect, <span class="hljs-number">10</span>);</pre></div>
+        
+      
+        
+        <p>Execute the <code>two_power</code> function.</p>
+
+        
+          <div class='highlight'><pre>	two_power(v, n);</pre></div>
+        
+      
+        
+        <p>Check the return value.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (mpz_cmp(v, e) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> mpz_get_str(NULL, <span class="hljs-number">10</span>, v);
+	}</pre></div>
+        
+      
+        
+        <p>Free memory.</p>
+
+        
+          <div class='highlight'><pre>	mpz_clear(v);
+	mpz_clear(e);
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+        
+        <p>Run all tests.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">int</span> main(<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span> **argv) {
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Starting twopower test\n"</span>);
+	
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Testing 10^2^2                 "</span>);
+	test_evaluate(test(<span class="hljs-string">"10"</span>, <span class="hljs-number">2</span>, <span class="hljs-string">"10000"</span>));
+
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Testing 64^2^8                 "</span>);
+	test_evaluate(test(<span class="hljs-string">"64"</span>, <span class="hljs-number">8</span>, <span class="hljs-string">"241031242692103258858011660602831411291209324794568895135\
+	96750390652573915918032006690850241073460496634487662808880047878624169787949583249696\
+	12987890774651455213339381625224770782077917681499676845543137387820057597345857904599\
+	10946138712209950796499781564134230067762947335528161742841179416396778587037036896910\
+	92215919430542320115627584500805795878509009937148922834766466311815150638048733751822\
+	60506246992837898705971012525843324401232986857004760339316736"</span>));
+
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Testing 7^2^11                 "</span>);
+	test_evaluate(test(<span class="hljs-string">"7"</span>, <span class="hljs-number">11</span>, <span class="hljs-string">"576482262441085687652480453073788264666259436882592829793\
+	49021221691439286800130702034747819273393373861597335020467524096687080908605455517537\
+	98421743908330876166181010733772966004002111857108038938627393787786306679205562920095\
+	63153283204683274767786727021298402608577538304760241573833598028808748844847898186373\
+	30402177645747833785214643531344756842356462416103175306222531316033253305990069730053\
+	65157811496376284750836148371631482659812603801372440138711588708633159794806234703423\
+	51940243257041396105803911324309907494370602037535002101441108999411726766765596925187\
+	45505749397324779542251261129948498444434732399522359385088921357569030990488376951054\
+	95090823978154971781090020674788883128800953221608421409515457642796447589371477796633\
+	13737066925789511752368267105452643023953658751884303757777580999150212356866565160668\
+	85966526937323644889898375407532259263336101855056965604604029631540061041098726716348\
+	74522042562152429965728886615463728728451846690739850136148414593456654476239825413272\
+	93825640570366519126075573314769851638715647402281667737082079249614259734758373634075\
+	16708573581744400512509149165841897734301296711453610919809727191091505520684968336762\
+	18287925088894357429777407758920939117150277852066288410805283458372597738195865403414\
+	28106515089592363545676168770659996184525104032233499925881939761773781736489371664279\
+	99226250457379336787543341792294795085527367801770352449239182305956360957814513901621\
+	86731129885427825235519877213979101763756651618425824328620578120517268945379603240442\
+	17121685499252907130758562175551920300771432574349977394861896371361547161722598121252\
+	73376476888174305510106900361209761654940805795966646797704007602314319372683742734205\
+	5935187889465976722306843475410781388801"</span>));
+
+	test_end();
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

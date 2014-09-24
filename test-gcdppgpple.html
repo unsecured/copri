@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>test-gcdppgpple.c</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>test-gcdppgpple.c</h1>
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="array.html">
+                    array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="copri.html">
+                    copri.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="gen.html">
+                    gen.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-appendcb.html">
+                    test-appendcb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-array.html">
+                    test-array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-arrayio.html">
+                    test-arrayio.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cb.html">
+                    test-cb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbextend.html">
+                    test-cbextend.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbmerge.html">
+                    test-cbmerge.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-findfactor.html">
+                    test-findfactor.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppgpple.html">
+                    test-gcdppgpple.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppippo.html">
+                    test-gcdppippo.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-prod.html">
+                    test-prod.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-split.html">
+                    test-split.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-twopower.html">
+                    test-twopower.c
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>copri, Attacking RSA by factoring coprimes</p>
+<p>License: GNU Lesser General Public License (LGPL), version 3 or later
+See the lgpl.txt file in the root directory or <a href="https://www.gnu.org/licenses/lgpl">https://www.gnu.org/licenses/lgpl</a>.</p>
+
+        
+      
+        
+        <p>This is a test of <a href="copri.html">copri</a> <code>gcd_ppg_pple</code> function.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdlib.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdio.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;gmp.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "test.h"</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "copri.h"</span>
+
+<span class="hljs-keyword">int</span> tests_passed = <span class="hljs-number">0</span>;
+<span class="hljs-keyword">int</span> tests_failed = <span class="hljs-number">0</span>;</pre></div>
+        
+      
+        
+        <p>This function calculates <code>ppg</code>, <code>pple</code> and <code>gcd</code> and compares the value to the expected strings.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">static</span> <span class="hljs-keyword">char</span> * test_gcd_ppg_pple(<span class="hljs-keyword">char</span> * str_a, <span class="hljs-keyword">char</span> * str_b, <span class="hljs-keyword">char</span> * str_expect_gcd, <span class="hljs-keyword">char</span> * str_expect_ppg, <span class="hljs-keyword">char</span> * str_expect_pple) {
+	mpz_t a;
+	mpz_t b;
+	mpz_t a0;
+	mpz_t b0;
+	mpz_t gcd;
+	mpz_t ppg;
+	mpz_t pple;
+
+	mpz_t expect_gcd;
+	mpz_t expect_ppg;
+	mpz_t expect_pple;
+
+	mpz_init_set_str(a, str_a, <span class="hljs-number">10</span>);
+	mpz_init_set_str(b, str_b, <span class="hljs-number">10</span>);
+	mpz_init_set(a0, a);
+	mpz_init_set(b0, b);
+
+	mpz_init(gcd);
+	mpz_init(ppg);
+	mpz_init(pple);
+
+	mpz_init_set_str(expect_gcd, str_expect_gcd, <span class="hljs-number">10</span>);
+	mpz_init_set_str(expect_ppg, str_expect_ppg, <span class="hljs-number">10</span>);
+	mpz_init_set_str(expect_pple, str_expect_pple, <span class="hljs-number">10</span>);
+
+	gcd_ppg_pple(gcd, ppg, pple, a, b);</pre></div>
+        
+      
+        
+        <p>Check the return values.</p>
+
+        
+          <div class='highlight'><pre>
+	<span class="hljs-keyword">if</span> (mpz_cmp(expect_gcd, gcd) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">"gcd calculation error"</span>;
+	}
+
+	<span class="hljs-keyword">if</span> (mpz_cmp(expect_ppg, ppg) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">"ppg calculation error"</span>;
+	}
+
+	<span class="hljs-keyword">if</span> (mpz_cmp(expect_pple, pple) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">"pple calculation error"</span>;
+	}
+
+	<span class="hljs-keyword">if</span> (mpz_cmp(a, a0) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">"input value a has changed"</span>;
+	}
+	<span class="hljs-keyword">if</span> (mpz_cmp(b, b0) != <span class="hljs-number">0</span>) {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">"input value b has changed"</span>;
+	}
+
+	mpz_clear(a);
+	mpz_clear(b);
+	mpz_clear(a0);
+	mpz_clear(b0);
+	mpz_clear(gcd);
+	mpz_clear(ppg);
+	mpz_clear(pple);
+	mpz_clear(expect_gcd);
+	mpz_clear(expect_ppg);
+	mpz_clear(expect_pple);
+
+	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</pre></div>
+        
+      
+        
+        <p>Run all tests.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">int</span> main(<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span> **argv) {
+
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Starting gcd_ppg_pple test\n"</span>);
+
+	<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Test 1                         "</span>);</pre></div>
+        
+      
+        
+        <pre><code>a = <span class="hljs-number">3</span>^<span class="hljs-number">2</span> * <span class="hljs-number">7</span>^<span class="hljs-number">3</span> * <span class="hljs-number">13</span> = <span class="hljs-number">40131</span>
+b = <span class="hljs-number">2</span>^<span class="hljs-number">5</span> * <span class="hljs-number">3</span> * <span class="hljs-number">7</span>^<span class="hljs-number">2</span> * <span class="hljs-number">11</span> = <span class="hljs-number">51744</span>
+gcd(a,b) = <span class="hljs-number">147</span>
+ppi = <span class="hljs-number">3</span>^<span class="hljs-number">2</span> * <span class="hljs-number">7</span>^<span class="hljs-number">3</span> = <span class="hljs-number">3087</span>
+ppo = <span class="hljs-number">3</span>^<span class="hljs-number">2</span> * <span class="hljs-number">7</span>^<span class="hljs-number">3</span> * <span class="hljs-number">13</span> = <span class="hljs-number">13</span>
+</code></pre>
+        
+          <div class='highlight'><pre>	test_evaluate(test_gcd_ppg_pple(<span class="hljs-string">"40131"</span>, <span class="hljs-string">"51744"</span>, <span class="hljs-string">"147"</span>, <span class="hljs-string">"40131"</span>, <span class="hljs-string">"1"</span>));
+
+	test_end();
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

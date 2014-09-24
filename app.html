@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>app.c</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>app.c</h1>
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="array.html">
+                    array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="copri.html">
+                    copri.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="gen.html">
+                    gen.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-appendcb.html">
+                    test-appendcb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-array.html">
+                    test-array.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-arrayio.html">
+                    test-arrayio.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cb.html">
+                    test-cb.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbextend.html">
+                    test-cbextend.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-cbmerge.html">
+                    test-cbmerge.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-findfactor.html">
+                    test-findfactor.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppgpple.html">
+                    test-gcdppgpple.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-gcdppippo.html">
+                    test-gcdppippo.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-prod.html">
+                    test-prod.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-split.html">
+                    test-split.c
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="test-twopower.html">
+                    test-twopower.c
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>copri, Attacking RSA by factoring coprimes</p>
+<p>License: GNU Lesser General Public License (LGPL), version 3 or later
+See the lgpl.txt file in the root directory or <a href="https://www.gnu.org/licenses/lgpl">https://www.gnu.org/licenses/lgpl</a>.</p>
+
+        
+      
+        
+        <p>This file contains a simple application of the
+<a href="copri.html">copri</a> library.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdlib.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;stdio.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;unistd.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> &lt;gmp.h&gt;</span>
+<span class="hljs-preprocessor">#<span class="hljs-keyword">include</span> "copri.h"</span></pre></div>
+        
+      
+        
+        <p>Start by defining an neat looking banner.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-preprocessor">#<span class="hljs-keyword">define</span> PRINT_BANNER printf(""\</span>
+<span class="hljs-string">"   _______  _______  _______  _______ _________    \n"</span>\
+<span class="hljs-string">"  (  ____ \\(  ___  )(  ____ )(  ____ )\\__   __/    \n"</span>\
+<span class="hljs-string">"  | (    \\/| (   ) || (    )|| (    )|   ) (       \n"</span>\
+<span class="hljs-string">"  | |      | |   | || (____)|+ (____)|   | |       \n"</span>\
+<span class="hljs-string">"  | |      | |   | ||  _____)|     __)   | |       \n"</span>\
+<span class="hljs-string">"  | |      | |   | || (      | (\\ (      | |       \n"</span>\
+<span class="hljs-string">"  | (____/\\| (___) |+ )      | ) \\ \\_____) (___    \n"</span>\
+<span class="hljs-string">"  (_______/(_______)|/       |/   \\__/\\_______/    \n"</span>\
+<span class="hljs-string">"                                                   \n"</span>\
+<span class="hljs-string">"    Implementation of 'Factoring into coprimes     \n"</span>\
+<span class="hljs-string">"           in essentially linear time'             \n"</span>\
+<span class="hljs-string">"                                                   \n"</span>\
+<span class="hljs-string">"      by Martin Wind and Gerhard Reithofer         \n"</span>\
+<span class="hljs-string">"                                                   \n"</span>\
+<span class="hljs-string">"        Algorithm by Daniel J. Bernstein           \n"</span>\
+<span class="hljs-string">"   http://cr.yp.to/lineartime/dcba-20040404.pdf    \n\n"</span>);</pre></div>
+        
+      
+        
+        <p>The generic <code>main</code> function.</p>
+<p>Define all variables at the beginning to make the C99 compiler
+happy.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">int</span> main(<span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span> **argv) {
+	mpz_array s, p, out;
+	size_t count, i;
+	<span class="hljs-keyword">int</span> c, vflg = <span class="hljs-number">0</span>, sflg = <span class="hljs-number">0</span>, rflg = <span class="hljs-number">0</span>, errflg = <span class="hljs-number">0</span>, r = <span class="hljs-number">0</span>;
+	<span class="hljs-keyword">char</span> *filename = <span class="hljs-string">"primes.lst"</span>;</pre></div>
+        
+      
+        
+        <h4 id="argument-parsing">argument parsing</h4>
+<p>Boring <code>getopt</code> argument parsing.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">while</span> ((c = getopt(argc, argv, <span class="hljs-string">":svr"</span>)) != -<span class="hljs-number">1</span>) {
+		<span class="hljs-keyword">switch</span>(c) {
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'s'</span>:
+			sflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'v'</span>:
+			vflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'r'</span>:
+			rflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">':'</span>:
+			<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"Option -%c requires an operand\n"</span>, optopt);
+			errflg++;
+			<span class="hljs-keyword">break</span>;
+		<span class="hljs-keyword">case</span> <span class="hljs-string">'?'</span>:
+			<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"Unrecognized option: '-%c'\n"</span>, optopt);
+			errflg++;
+		}
+	}
+
+	<span class="hljs-keyword">if</span> (optind &lt; argc) {
+		filename = argv[optind];
+		<span class="hljs-keyword">if</span> (optind + <span class="hljs-number">1</span> &lt; argc) errflg++;
+	}
+
+	<span class="hljs-keyword">if</span> (rflg &amp;&amp; vflg) {
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"\n\t-r and -v can't be used simultaneously!\n\n"</span>);
+		errflg++;
+	}</pre></div>
+        
+      
+        
+        <p>Print the usage and exit if an error occurred during argument parsing.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (errflg) {
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"usage: [-vsr] [file]\n"</span>\
+                        <span class="hljs-string">"\n\t-v        be more verbose"</span>\
+                        <span class="hljs-string">"\n\t-r        output the found coprimes in raw gmp format"</span>\
+                        <span class="hljs-string">"\n\t-s        only check if there are coprimes"</span>\
+                        <span class="hljs-string">"\n\n"</span>);
+		<span class="hljs-built_in">exit</span>(<span class="hljs-number">2</span>);
+	}</pre></div>
+        
+      
+        
+        <p>Print the banner.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (vflg &gt; <span class="hljs-number">0</span>) {
+		PRINT_BANNER;
+	}</pre></div>
+        
+      
+        
+        <p>Load the keys.</p>
+
+        
+          <div class='highlight'><pre>	array_init(&amp;s, <span class="hljs-number">10</span>);
+	count = array_of_file(&amp;s, filename);
+	<span class="hljs-keyword">if</span> (count == <span class="hljs-number">0</span>) {
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"Can't load %s\n"</span>, filename);
+		<span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;
+	}
+	<span class="hljs-keyword">if</span> (s.used != count) {
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"Array size and load count do not match\n"</span>);
+		<span class="hljs-keyword">return</span> <span class="hljs-number">2</span>;
+	}
+	<span class="hljs-keyword">if</span> (s.used == <span class="hljs-number">0</span>) {
+		<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"No primes loaded (empty file)\n"</span>);
+		<span class="hljs-keyword">return</span> <span class="hljs-number">3</span>;
+	}</pre></div>
+        
+      
+        
+        <p>Print the key count.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (vflg &gt; <span class="hljs-number">0</span>) {
+		<span class="hljs-built_in">printf</span>(<span class="hljs-string">"%zu public keys loaded\nStarting factorization...\n"</span>, s.used);
+	}</pre></div>
+        
+      
+        
+        <p>Computing a coprime base for a finite set <a href="copri.html#computing-a-coprime-base-for-a-finite-set">Algorithm 18.1</a>.</p>
+
+        
+          <div class='highlight'><pre>	array_init(&amp;p, <span class="hljs-number">10</span>);
+	array_cb(&amp;p, &amp;s);</pre></div>
+        
+      
+        
+        <p>Check if we have found more coprime bases.</p>
+
+        
+          <div class='highlight'><pre>	<span class="hljs-keyword">if</span> (p.used == s.used) {
+		<span class="hljs-keyword">if</span> (vflg &gt; <span class="hljs-number">0</span>)
+			<span class="hljs-built_in">printf</span>(<span class="hljs-string">"No coprime pairs found :-(\n"</span>);
+		r = <span class="hljs-number">1</span>;
+	} <span class="hljs-keyword">else</span> {
+		<span class="hljs-keyword">if</span> (vflg &gt; <span class="hljs-number">0</span> || sflg &gt; <span class="hljs-number">0</span>)
+			<span class="hljs-built_in">printf</span>(<span class="hljs-string">"Found ~%zu coprime pairs!!!\nSearching factors...\n"</span>, (p.used - s.used));
+		<span class="hljs-keyword">if</span> (sflg == <span class="hljs-number">0</span>) {
+			array_init(&amp;out, <span class="hljs-number">9</span>);</pre></div>
+        
+      
+        
+        <p>Use <a href="copri.html#factoring-a-set-over-a-coprime-base">Algorithm 21.2</a> to find the coprimes in the coprime base.</p>
+
+        
+          <div class='highlight'><pre>			array_find_factors(&amp;out, &amp;s, &amp;p);</pre></div>
+        
+      
+        
+        <p>Output the factors.</p>
+
+        
+          <div class='highlight'><pre>			<span class="hljs-keyword">if</span> (out.used &gt; <span class="hljs-number">0</span>) {
+				<span class="hljs-keyword">if</span> ((out.used % <span class="hljs-number">3</span>) != <span class="hljs-number">0</span>) {
+					<span class="hljs-built_in">fprintf</span>(stderr, <span class="hljs-string">"Find factors returned an invalid array\n"</span>);
+				} <span class="hljs-keyword">else</span> {
+					<span class="hljs-keyword">if</span> (rflg) {
+						<span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; out.used; i++)
+							mpz_out_raw(stdout, out.<span class="hljs-built_in">array</span>[i]);
+					} <span class="hljs-keyword">else</span> {
+						<span class="hljs-keyword">for</span>(i = <span class="hljs-number">0</span>; i &lt; out.used; i+=<span class="hljs-number">3</span>)
+							gmp_printf(<span class="hljs-string">"\n### Found factors of\n%Zu\n=\n%Zu\nx\n%Zu\n"</span>, out.<span class="hljs-built_in">array</span>[i], out.<span class="hljs-built_in">array</span>[i+<span class="hljs-number">1</span>], out.<span class="hljs-built_in">array</span>[i+<span class="hljs-number">2</span>]);
+					}
+				}
+			}
+			array_clear(&amp;out);
+		}
+	}
+
+	array_clear(&amp;p);
+	array_clear(&amp;s);
+
+	<span class="hljs-keyword">return</span> r;
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>
