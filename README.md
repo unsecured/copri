@@ -68,6 +68,8 @@ Requirements:
 
 On Debian or Ubuntu simply install the packages `scons`, `libgmp-dev` (and `nodejs` if you want to build the documentation). Debian and Ubuntu should ship an suitable OpenMP compiler see [openmp-compilers](http://openmp.org/wp/openmp-compilers/).
 
+On RHEL or CentOS install the packages `scons`, `gmp-devel` and `openssl-devel` (and download + install the nodejs Linux binaries from <http://nodejs.org/download/> to build the documentation).
+
 Unpack the Tarball (`tar xvzf copri.tar.gz`), enter the directory and build it by running 
 `scons` without any parameters. If you want to build copri without OpenMP run `scons --no-omp`.
 
