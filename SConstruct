@@ -4,7 +4,7 @@ env = Environment(
     CCFLAGS = ['-Wall'],
     OMP = 0,
     BUILD_TESTS = 0,
-    LIBS = ['array', 'copri', 'gmp']
+    LIBS = ['gmp', 'copri', 'array']
 )
 
 
