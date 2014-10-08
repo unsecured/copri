@@ -13,22 +13,22 @@
 
 // Start by defining an neat looking banner.
 #define PRINT_BANNER printf(""\
-"   _______  _______  _______  _______ _________    \n"\
-"  (  ____ \\(  ___  )(  ____ )(  ____ )\\__   __/    \n"\
-"  | (    \\/| (   ) || (    )|| (    )|   ) (       \n"\
-"  | |      | |   | || (____)|+ (____)|   | |       \n"\
-"  | |      | |   | ||  _____)|     __)   | |       \n"\
-"  | |      | |   | || (      | (\\ (      | |       \n"\
-"  | (____/\\| (___) |+ )      | ) \\ \\_____) (___    \n"\
-"  (_______/(_______)|/       |/   \\__/\\_______/    \n"\
-"                                                   \n"\
-"    Implementation of 'Factoring into coprimes     \n"\
-"           in essentially linear time'             \n"\
-"                                                   \n"\
-"      by Martin Wind and Gerhard Reithofer         \n"\
-"                                                   \n"\
-"        Algorithm by Daniel J. Bernstein           \n"\
-"   http://cr.yp.to/lineartime/dcba-20040404.pdf    \n\n");
+"   _______  _______  _______  _______ _________    \n"\
+"  (  ____ \\(  ___  )(  ____ )(  ____ )\\__   __/    \n"\
+"  | (    \\/| (   ) || (    )|| (    )|   ) (       \n"\
+"  | |      | |   | || (____)|+ (____)|   | |       \n"\
+"  | |      | |   | ||  _____)|     __)   | |       \n"\
+"  | |      | |   | || (      | (\\ (      | |       \n"\
+"  | (____/\\| (___) |+ )      | ) \\ \\_____) (___    \n"\
+"  (_______/(_______)|/       |/   \\__/\\_______/    \n"\
+"                                                   \n"\
+"    Implementation of 'Factoring into coprimes     \n"\
+"           in essentially linear time'             \n"\
+"                                                   \n"\
+"      by Martin Wind and Gerhard Reithofer         \n"\
+"                                                   \n"\
+"        Algorithm by Daniel J. Bernstein           \n"\
+"   http://cr.yp.to/lineartime/dcba-20040404.pdf    \n\n");
 
 // The generic `main` function.
 //
