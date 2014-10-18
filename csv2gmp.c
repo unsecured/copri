@@ -197,12 +197,13 @@ void readline(FILE *fp, readline_cb_t readline_cb, unsigned int read_buffer_size
 	unsigned int line_start = 0;
 	unsigned int line_end = 0;
 	unsigned int line_chunck_size = 0;
-	unsigned int i=0;
+	unsigned int i = 0;
 	size_t bytes_read = 0;
+	unsigned int x = 0;
 
 	// Alloc the line buffer by guessed size.
 	line_buf = malloc(line_buf_size);
-	for (unsigned int x=0; x<line_buf_size; x++)
+	for (x = 0; x<line_buf_size; x++)
 		line_buf[x] = '?';
 
 	// Start looping until the end of the file is reached.
