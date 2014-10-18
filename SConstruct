@@ -89,7 +89,7 @@ env.Program('app', ['app.c'])
 
 env.Program('app-n2', ['app-n2.c'], LIBS = ['array', 'copri', 'gmp'])
 
-env.Program('csv2gmp', ['csv2gmp.c'], LIBS = ['gmp', 'uv'])
+env.Program('csv2gmp', ['csv2gmp.c'], LIBS = ['gmp'])
 
 def config_h_build(target, source, env):
 
