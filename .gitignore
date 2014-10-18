@@ -6,6 +6,7 @@ docs
 gen
 app
 app-n2
+csv2gmp
 test-cbmerge
 test-cbextend
 test-cb

@@ -5,3 +5,7 @@
 #if %(openmp)d
 #define USE_OPENMP 1
 #endif
+
+#if %(crypto)d
+#define USE_CRYPTO 1
+#endif
