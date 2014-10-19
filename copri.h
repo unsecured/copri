@@ -9,6 +9,8 @@
 #include "array.h"
 #include "pool.h"
 
+typedef unsigned int dot_t;
+
 void two_power(mpz_t rot, unsigned long long n);
 
 void gcd_ppi_ppo(mpz_pool *pool, mpz_t gcd, mpz_t ppi, mpz_t ppo, const mpz_t a, const mpz_t c);
@@ -33,7 +35,7 @@ void cbextend(mpz_pool *pool, mpz_array *ret, mpz_array *p, const mpz_t b);
 
 void cbmerge(mpz_pool *pool, mpz_array *s, mpz_array *p, mpz_array *q);
 
-void cb(mpz_pool *pool, mpz_array *ret, mpz_t *s, size_t from, size_t to);
+void cb(mpz_pool *pool, mpz_array *ret, mpz_t *s, size_t from, size_t to, dot_t start);
 
 void array_cb(mpz_pool *pool, mpz_array *ret, mpz_array *s);
 

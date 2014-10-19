@@ -10,13 +10,55 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <gmp.h>
+#include <time.h>
 #include "copri.h"
 #include "config.h"
 #if USE_OPENMP
 #include <omp.h>
 #endif
 
+long long current_timestamp() {
+    struct timeval te;
+    gettimeofday(&te, NULL); // get current time
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // caculate milliseconds
+    // printf("milliseconds: %lld\n", milliseconds);
+    return milliseconds;
+}
 
+dot_t dot_index = 0;
+
+dot_t dot_get() {
+	return dot_index++;
+}
+
+void write_dot_start() {
+	printf("digraph copri {\n");
+}
+
+void write_dot(dot_t start, dot_t end, int is_end) {
+
+	if (start == 0) return;
+
+	printf("\t%u -> %u;\n", end, start);
+}
+
+void write_dot_label(dot_t end, mpz_array *array, long long time_cb, long long time_cbm, size_t index) {
+	/*
+	mpf_t b;
+	mpf_init(b);
+	mpf_set_z(b, array->array[array->used-1]);
+	gmp_printf("\t%u [label=\"%u %Fe\"];\n", end, end, b);
+	mpf_clear(b);
+	*/
+	if (array->used == 1)
+		printf("\t%u [shape=box, label=\"[%u] i=%zu\"]\n", end, end, index);
+	else
+		printf("\t%u [label=\"[%u] n(%zu) cb=%lld, cbm=%lld\"]\n", end, end, array->used, time_cb, time_cbm);
+}
+
+void write_dot_end() {
+	printf("}\n");
+}
 
 // ###Compute a^2^n.
 
@@ -443,7 +485,7 @@ void cbmerge(mpz_pool *pool, mpz_array *s, mpz_array *p, mpz_array *q) {
 			pool_push(pool, x);
 			return;
 		}
-		// Find R ← {qk : bit(k) = 1}
+		// Find R ← {qk : bit(k) = 0}
 		array_init(&r, n);
 		for(k=0; k<n; k++) {
 			if (!bit(i,k)) array_add(&r, q->array[k]);
@@ -486,12 +528,14 @@ void cbmerge(mpz_pool *pool, mpz_array *s, mpz_array *p, mpz_array *q) {
 // Algorithm 18.1 [PDF page 24](http://cr.yp.to/lineartime/dcba-20040404.pdf)
 //
 // See [cb test](test-cb.html) for basic usage.
-void cb(mpz_pool *pool, mpz_array *ret, mpz_t *s, size_t from, size_t to) {
+void cb(mpz_pool *pool, mpz_array *ret, mpz_t *s, size_t from, size_t to, dot_t start) {
 	size_t n = to - from;
 	mpz_array p, q;
-#if USE_OPENMP
-	mpz_pool pool_p, pool_q;
-#endif
+	long long end_time, start_time_cbm, start_time = current_timestamp();
+	
+	dot_t end = dot_get();
+	
+
 
 	// If #S = 1: Find a ∈ S. Print a if a != 1. Stop.
 	if (n == 0) {
@@ -502,51 +546,26 @@ void cb(mpz_pool *pool, mpz_array *ret, mpz_t *s, size_t from, size_t to) {
 				array_add(ret, s[from]);
 			}
 		}
+		write_dot(start, end, 1);
+		write_dot_label(end, ret, current_timestamp()-start_time, 0, from);
 		return;
 	}
-
-// ## OpenMP multithreading
-// Execute both recrusive `cb` calls in parallel.
-//
-// `export OMP_NUM_THREADS=4` to set the maximal thread number.
+	
+	
+	write_dot(start, end, 0);
 	array_init(&p, n);
 	array_init(&q, n);
-#if USE_OPENMP
-	const int parent = omp_get_thread_num();
-#pragma omp parallel sections
-{
- #pragma omp section
- {
-	const int id = omp_get_thread_num();
-	if (id != parent) {
-		/* printf("New thread\n"); */
-		pool_init(&pool_p, 0);
-		cb(&pool_p, &p, s, from, to - n/2 - 1);
-		pool_clear(&pool_p);
-	} else {
-		cb(pool, &p, s, from, to - n/2 - 1);
-	}
- }
- #pragma omp section
- {
-	const int id = omp_get_thread_num();
-	if (id != parent) {
-		/* printf("New thread\n"); */
-		pool_init(&pool_q, 0);
-		cb(&pool_q, &q, s, to - n/2, to);
-		pool_clear(&pool_q);
-	} else {
-		cb(pool, &q, s, to - n/2, to);
-	}
- }
-}
-#else
-	cb(pool, &p, s, from, to - n/2 - 1);
-	cb(pool, &q, s, to - n/2, to);
-#endif
+	
+	cb(pool, &p, s, from, to - n/2 - 1, end);
+	cb(pool, &q, s, to - n/2, to, end);
+	
 	// Print cbmerge(P∪Q)
 	if (q.used && p.used) {
+		start_time_cbm = current_timestamp();
 		cbmerge(pool, ret, &p, &q);
+		//write_dot(start, end, 0, ret);
+		end_time = current_timestamp();
+		write_dot_label(end, ret, end_time-start_time, end_time-start_time_cbm, from);
 	} else if(!q.used && p.used) {
 		array_add_array(ret, &p);
 		fprintf(stderr, "warning: q is empty in cb\n");
@@ -564,9 +583,11 @@ void cb(mpz_pool *pool, mpz_array *ret, mpz_t *s, size_t from, size_t to) {
 
 // #### array verison
 void array_cb(mpz_pool *pool, mpz_array *ret, mpz_array *s) {
-	if (s->used > 0)
-		cb(pool, ret, s->array, 0, s->used-1);
-	else
+	if (s->used > 0) {
+		write_dot_start();
+		cb(pool, ret, s->array, 0, s->used-1, dot_get());
+		write_dot_end();
+	} else
 		fprintf(stderr, "array_cb on empty array\n");
 }
 
