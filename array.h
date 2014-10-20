@@ -28,7 +28,7 @@ void array_print(mpz_array *a);
 
 size_t array_of_file(mpz_array *a, const char *filename);
 
-int array_to_file(mpz_array *a, const char *filename);
+size_t array_to_file(mpz_array *a, const char *filename);
 
 void array_msort(mpz_array *a);
 

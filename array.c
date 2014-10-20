@@ -121,23 +121,25 @@ size_t array_of_file(mpz_array *a, const char *filename) {
 }
 
 // Store the content of the array in a file
-int array_to_file(mpz_array *a, const char *filename) {
-	size_t i, buff_len;
+size_t array_to_file(mpz_array *a, const char *filename) {
+	size_t i, buff_len, count = 0;
 	FILE *out;
 	if (strcmp(filename, "-") == 0) {
 		out = stdout;
 	} else {
 		out = fopen(filename, "a+");
 	}
-	printf("writing %zu\n", a->used);
+
 	for (i = 0; i < a->used; i++) {
 		buff_len = mpz_out_raw(out, a->array[i]);
 		if (buff_len == 0) {
 			printf("Cannot write to file %s.\n", filename);
+		} else {
+			count++;
 		}
 	}
 	fclose(out);
-	return 0;
+	return count;
 }
 
 // ## sort a array
