@@ -14,16 +14,22 @@ typedef struct {
 
 void array_init(mpz_array *a, size_t size);
 
-void array_copy(mpz_array *target, mpz_array *src);
-
 void array_add(mpz_array *a, const mpz_t integer);
 
+void array_add_array(mpz_array *target, mpz_array *src);
+
+void array_copy(mpz_array *target, mpz_array *src);
+
 void array_clear(mpz_array *a);
+
+int array_swap(mpz_array *a, mpz_array *b);
+
+void array_print(mpz_array *a);
 
 size_t array_of_file(mpz_array *a, const char *filename);
 
 int array_to_file(mpz_array *a, const char *filename);
 
-void array_print(mpz_array *a);
+void array_msort(mpz_array *a);
 
 #endif /* ARRAY_H */

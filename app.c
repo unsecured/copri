@@ -40,11 +40,15 @@ int main(int argc, char **argv) {
 	size_t count, i;
 	int c, vflg = 0, sflg = 0, rflg = 0, errflg = 0, r = 0;
 	char *filename = "primes.lst";
+	char *cb_file = NULL;
 
 	// #### argument parsing
 	// Boring `getopt` argument parsing.
-	while ((c = getopt(argc, argv, ":svr")) != -1) {
+	while ((c = getopt(argc, argv, ":svrb:")) != -1) {
 		switch(c) {
+		case 'b':
+			cb_file = optarg;
+			break;
 		case 's':
 			sflg++;
 			break;
@@ -77,6 +81,7 @@ int main(int argc, char **argv) {
 	// Print the usage and exit if an error occurred during argument parsing.
 	if (errflg) {
 		fprintf(stderr, "usage: [-vsr] [file]\n"\
+                        "\n\t-b FILE   store the coprime base in FILE"\
                         "\n\t-v        be more verbose"\
                         "\n\t-r        output the found coprimes in raw gmp format"\
                         "\n\t-s        only check if there are coprimes"\
@@ -107,13 +112,23 @@ int main(int argc, char **argv) {
 	}
 	// Print the key count.
 	if (vflg > 0) {
-		printf("%zu public keys loaded\nStarting factorization...\n", s.used);
+		printf("%zu public keys loaded\n", s.used);
+		if (cb_file != NULL)
+			printf("cb is going to be saved in '%s'\n", cb_file);
+		printf("Starting factorization...\n");
 	}
 
-
 	// Computing a coprime base for a finite set [Algorithm 18.1](copri.html#computing-a-coprime-base-for-a-finite-set).
-	array_init(&p, 10);
+	array_init(&p, s.used);
 	array_cb(&pool, &p, &s);
+
+	if (cb_file != NULL) {
+		if (vflg > 0) {
+			printf("storing cb in '%s'\n", cb_file);
+		}
+		array_to_file(&p, cb_file);
+	}
+
 
 	// Check if we have found more coprime bases.
 	if (p.used == s.used) {

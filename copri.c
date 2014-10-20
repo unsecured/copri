@@ -435,7 +435,7 @@ void cbmerge(mpz_pool *pool, mpz_array *s, mpz_array *p, mpz_array *q) {
 	} while(mpz_cmp_ui(x, n) < 0);
 
 	// Set S ← P.
-	array_copy(s, p);
+	array_add_array(s, p);
 
 	while(1) {
 		// If i = b: Print S. Stop.
@@ -468,7 +468,7 @@ void cbmerge(mpz_pool *pool, mpz_array *s, mpz_array *p, mpz_array *q) {
 
 		// Compute S ← cbextend(T ∪ {x})
 		array_clear(s);
-		array_init(s, s->size);
+		array_init(s, t.size);
 		cbextend(pool, s, &t, x);
 
 		// Free the memory.
@@ -548,10 +548,10 @@ void cb(mpz_pool *pool, mpz_array *ret, mpz_t *s, size_t from, size_t to) {
 	if (q.used && p.used) {
 		cbmerge(pool, ret, &p, &q);
 	} else if(!q.used && p.used) {
-		array_copy(ret, &p);
+		array_add_array(ret, &p);
 		fprintf(stderr, "warning: q is empty in cb\n");
 	} else if(q.used && !p.used) {
-		array_copy(ret, &q);
+		array_add_array(ret, &q);
 		fprintf(stderr, "warning: p is empty in cb\n");
 	} else {
 		fprintf(stderr, "warning: p an q are empty in cb\n");
