@@ -91,6 +91,22 @@ int array_swap(mpz_array *a, mpz_array *b) {
 	}
 }
 
+// Tests if the two arrays are equal.
+// Use `array_msort` to ensure the same ordering.
+// Return `1` if the arrays are equal and `0` if they differ
+int array_equal(mpz_array *a, mpz_array *b) {
+	size_t i;
+	if (a->used == b->used) {
+		for (i = 0; i < a->used; i++) {
+			if (mpz_cmp(a->array[i], b->array[i]) != 0)
+				return 0;
+		}
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 // Print a `mpz_array` in base 10 to stdout.
 void array_print(mpz_array *a) {
 	size_t i;
@@ -104,41 +120,60 @@ void array_print(mpz_array *a) {
 
 // ## load, store & print a array
 
-// Populates an array with values read from a file.
-size_t array_of_file(mpz_array *a, const char *filename) {
+// Populates an array with values read from stream `in`.
+size_t array_of_stdio(mpz_array *a, FILE *in) {
 	size_t count = 0;
-	mpz_t i;
-	if (access(filename, R_OK) == -1) return 0;
-	FILE *in = fopen(filename, "r");
-	mpz_init(i);
-	while(mpz_inp_raw(i, in) > 0) {
-		array_add(a, i);
+	mpz_t buf;
+	mpz_init(buf);
+	while(mpz_inp_raw(buf, in) > 0) {
+		array_add(a, buf);
 		count++;
 	}
-	mpz_clear(i);
-	fclose(in);
+	mpz_clear(buf);
 	return count;
 }
 
+
+// Populates an array with values read from a file.
+size_t array_of_file(mpz_array *a, const char *filename) {
+	size_t count;
+	FILE *in;
+	if (strcmp(filename, "-") == 0) {
+		in = stdin;
+	} else {
+		if (access(filename, R_OK) != 0) return 0;
+		in = fopen(filename, "r");
+	}
+	count = array_of_stdio(a, in);
+	if (strcmp(filename, "-") != 0)
+		fclose(in);
+	return count;
+}
+
+// write the content of the array to stream
+size_t array_to_stdio(mpz_array *a, FILE *out) {
+	size_t i, count = 0;
+	for (i = 0; i < a->used; i++) {
+		if (mpz_out_raw(out, a->array[i]) > 0) {
+			count++;
+		}
+	}
+	return count;
+}
+
+
 // Store the content of the array in a file
 size_t array_to_file(mpz_array *a, const char *filename) {
-	size_t i, buff_len, count = 0;
+	size_t count;
 	FILE *out;
 	if (strcmp(filename, "-") == 0) {
 		out = stdout;
 	} else {
 		out = fopen(filename, "a+");
 	}
-
-	for (i = 0; i < a->used; i++) {
-		buff_len = mpz_out_raw(out, a->array[i]);
-		if (buff_len == 0) {
-			printf("Cannot write to file %s.\n", filename);
-		} else {
-			count++;
-		}
-	}
-	fclose(out);
+	count = array_to_stdio(a, out);
+	if (strcmp(filename, "-") != 0)
+		fclose(out);
 	return count;
 }
 

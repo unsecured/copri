@@ -16,49 +16,56 @@ int tests_failed = 0;
 // **Test `test`**.
 static char * test() {
 
-	mpz_array in1;
-	mpz_array in2;
-	mpz_array out;
+	mpz_array in1, in2, out, array_expect;
 	mpz_t b;
 	mpz_pool pool;
 
 	pool_init(&pool, 0);
-	array_init(&in1, 10);
-	array_init(&in2, 10);
-	array_init(&out, 3);
+	array_init(&in1, 2);
+	array_init(&in2, 2);
+	array_init(&out, 5);
+	array_init(&array_expect, 5);
 
-	// primes: 577, 727, 863
+	mpz_init_set_str(b, "317", 10);
+	array_add(&array_expect, b);
+	mpz_init_set_str(b, "577", 10);
+	array_add(&array_expect, b);
+	mpz_init_set_str(b, "727", 10);
+	array_add(&array_expect, b);
+	mpz_init_set_str(b, "196463", 10);
+	array_add(&array_expect, b);
+	mpz_init_set_str(b, "346063", 10);
+	array_add(&array_expect, b);
+
+	// primes: 401, [577], 727, 863
 	// `a = 727 * 577 = 419479`
-	// `b = 727 * 863 = 627401`
-	mpz_init_set_str(b, "419479", 0);
+	// `b = 401 * 863 = 346063`
+	mpz_set_str(b, "419479", 10);
 	array_add(&in1, b);
 
-	mpz_set_str(b, "627401", 0);
+	mpz_set_str(b, "346063", 10);
 	array_add(&in1, b);
 
-	printf("\nin1:\n");
-	array_print(&in1);
-
-	// primes: 317, 577, 223, 863
+	// primes: 317, 223, [577], 881
 	// `a = 317 * 577 = 182909`
-	// `b = 223 * 863 = 192449`
-	mpz_set_str(b, "182909", 0);
+	// `b = 223 * 881 = 196463`
+	mpz_set_str(b, "182909", 10);
 	array_add(&in2, b);
 
-	mpz_set_str(b, "192449", 0);
+	mpz_set_str(b, "196463", 10);
 	array_add(&in2, b);
-
-	printf("\nin2:\n");
-	array_print(&in2);
 
 	cbmerge(&pool, &out, &in1, &in2);
 
-	printf("\nout:\n");
-	array_print(&out);
+	array_msort(&out);
+	if (!array_equal(&array_expect, &out)) {
+		return "out and array_expect differ!";
+	}
 
 	array_clear(&in1);
 	array_clear(&in2);
 	array_clear(&out);
+	array_clear(&array_expect);
 	mpz_clear(b);
 	pool_clear(&pool);
 

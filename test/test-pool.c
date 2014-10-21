@@ -13,11 +13,12 @@
 int tests_passed = 0;
 int tests_failed = 0;
 
-int print_alloc = 0;
+int count_alloc = 0;
+int count = 0;
 
 void *test_alloc(size_t size) {
-	if (print_alloc)
-		printf("alloc of %zu bytes\n", size);
+	if (count_alloc)
+		count++;
 	return malloc(size);
 }
 
@@ -30,7 +31,8 @@ static char * test_1() {
 	mpz_pool p;
 	mpz_t a, b;
 	size_t i;
-	print_alloc = 1;
+	count = 0;
+	count_alloc = 1;
 	pool_init(&p, 1);
 
 	for (i=0; i<12; i++) {
@@ -38,11 +40,17 @@ static char * test_1() {
 		pool_pop(&p, b);
 		mpz_add_ui(a, a, 1);
 		mpz_add(b, a, b);
-		print_alloc = 0;
+		/*
+		count_alloc = 0;
 		gmp_printf("%zu: %Zu\n", i, b);
-		print_alloc = 1;
+		count_alloc = 1;
+		*/
 		pool_push(&p, b);
 		pool_push(&p, a);
+	}
+
+	if (count > 257) {
+		return "Pool does not work as expected!";
 	}
 
 	pool_clear(&p);

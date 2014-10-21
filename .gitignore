@@ -29,3 +29,6 @@ deploy*
 .settings
 .DS_Store
 config.h
+config.log
+.sconf_temp
+test/test.lst

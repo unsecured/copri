@@ -1,10 +1,10 @@
-.PHONY: all clean install doc package copri
+.PHONY: all clean install doc package copri test
 default:    copri
 all:	doc test install
 copri:
 	scons
 test:
-	scons --test
+	scons --run-test
 clean:
 	scons -c --test
 	rm -rf docs

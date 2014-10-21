@@ -1,23 +1,30 @@
+from __future__ import print_function
+
 env = Environment(
 	LIBPATH = ['.', '/usr/lib', '/usr/local/lib'],
-    CPPPATH = ['/usr/include', '/usr/local/include'],
+    CPPPATH = ['.', '/usr/include', '/usr/local/include'],
     CCFLAGS = ['-Wall'],
     OMP = 0,
     CRYPTO = 1,
     BUILD_TESTS = 0,
+    RUN_TESTS = 0,
     LIBS = ['copri', 'pool', 'array', 'gmp']
 )
 
 AddOption("--test", action="store_true", dest="test", default=False, help="build tests")
 AddOption("--no-omp", action="store_false", dest="omp", default=True, help="don't use OpenMP multithreading")
+AddOption("--run-test", action="store_true", dest="runtest", default=False, help="run the tests")
 
 env['BUILD_TESTS'] = GetOption('test')
+if GetOption('runtest'):
+	env['BUILD_TESTS'] = True
+	env['RUN_TESTS'] = True
 
 if env['PLATFORM'] == 'posix':
 	if GetOption('omp'):
 		env['OMP'] = 1
 elif env['PLATFORM'] == 'darwin':
-	env.AppendUnique(CCFLAGS =['-Wno-deprecated-declarations'])
+	#env.AppendUnique(CCFLAGS =['-Wno-deprecated-declarations'])
 	env['CC'] = 'clang'
 else:
 	print('Platform %s is not supported' % env['PLATFORM'])
@@ -46,6 +53,9 @@ if not conf.CheckCHeader('openssl/rsa.h') or not conf.CheckCHeader('openssl/sha.
 
 env = conf.Finish()
 
+if env['BUILD_TESTS']:
+	env.AppendUnique(CCFLAGS =['-g'])
+
 env.Library('array', ['array.c'], LIBS = ['gmp'])
 
 env.Library('pool', ['pool.c'], LIBS = ['gmp', 'array'])
@@ -53,37 +63,34 @@ env.Library('pool', ['pool.c'], LIBS = ['gmp', 'array'])
 env.Library('copri', ['copri.c'])
 
 if env['CRYPTO']:
-	env.Program('gen', ['gen.c'], LIBS = ['array', 'gmp', 'crypto'])
+	env.Program('gen', ['gen.c'], LIBS = ['array', 'gmp', 'crypto'], CCFLAGS =['-Wno-deprecated-declarations'])
 
-if env['BUILD_TESTS']:
-
-	env.AppendUnique(CCFLAGS =['-g'])
-	
-	env.Program('test-prod', ['test-prod.c'])
-
-	env.Program('test-array', ['test-array.c'])
-	
-	env.Program('test-arrayio', ['test-arrayio.c'])
-	
-	env.Program('test-twopower', ['test-twopower.c'])
-	
-	env.Program('test-gcdppippo', ['test-gcdppippo.c'])
-	
-	env.Program('test-gcdppgpple', ['test-gcdppgpple.c'])
-	
-	env.Program('test-appendcb', ['test-appendcb.c'])
-	
-	env.Program('test-split', ['test-split.c'])
-	
-	env.Program('test-cbextend', ['test-cbextend.c'])
-	
-	env.Program('test-cbmerge', ['test-cbmerge.c'])
-	
-	env.Program('test-cb', ['test-cb.c'])
-	
-	env.Program('test-findfactor', ['test-findfactor.c'])
-	
-	env.Program('test-pool', ['test-pool.c'])
+if env['BUILD_TESTS']:	
+	prev_cmd = None
+	for name in [
+		'array',
+		'arrayio',
+		'prod',
+		'twopower',
+		'gcdppippo',
+		'gcdppgpple',
+		'appendcb',
+		'split',
+		'cbextend',
+		'cbmerge',
+		'cb',
+		'findfactor',
+		'pool'
+		]:
+		rel = 'test/test-'+name
+		test = env.Program(rel, [rel+'.c'])
+		if env['RUN_TESTS']:
+			deps = [test]
+			if prev_cmd:
+				deps.append(prev_cmd)
+			cmd = Command(rel+'_test', deps, test[0].abspath)			
+			AlwaysBuild(cmd)
+			prev_cmd = cmd
 	
 env.Program('app', ['app.c'])
 
@@ -111,19 +118,13 @@ def config_h_build(target, source, env):
 
 env.AlwaysBuild(env.Command('config.h', 'config.h.in', config_h_build))
 
+if not GetOption('clean'):
+	import atexit
+	
+	if not env['CRYPTO']:
+		atexit.register(lambda: print('WARNING: OpenSSL is not installed!\n\t The \'gen\' util has not been build.'))
 
-import atexit
-
-def print_crypto_missing():
-	print('WARNING: OpenSSL is not installed!\n\t The \'gen\' util has not been build.')
-
-if not env['CRYPTO']:
-	atexit.register(print_crypto_missing)
-
-def print_openmp_missing():
-	print('WARNING: No OpenMP compiler found!\n\t This build does not support multithreading.')
-
-if not env['OMP']:
-	atexit.register(print_openmp_missing)
+	if not env['OMP']:
+		atexit.register(lambda: print('WARNING: No OpenMP compiler found!\n\t This build does not support multithreading.'))
 
 

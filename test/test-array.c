@@ -83,6 +83,7 @@ static char * test_clear() {
 	return 0;
 }
 
+// Test merge sort.
 static char * test_msort() {
 	mpz_array a;
 	mpz_t p;
@@ -101,12 +102,7 @@ static char * test_msort() {
 		array_add(&a, p);
 	}
 
-	/* array_print(&a);
-	printf("sorting\n");*/
-
 	array_msort(&a);
-
-	/*array_print(&a);*/
 
 	for(g=0;g<a.used;g++) {
 		if (mpz_get_ui(a.array[g]) != g) {
@@ -122,6 +118,7 @@ static char * test_msort() {
 	return 0;
 }
 
+// Test merge sort.
 static char * test_msort_2() {
 	mpz_array a;
 	mpz_t p;
@@ -136,12 +133,7 @@ static char * test_msort_2() {
 		array_add(&a, p);
 	}
 
-	/* array_print(&a);
-
-	printf("sorting\n"); */
 	array_msort(&a);
-
-	/* array_print(&a); */
 
 	for(g=0;g<a.used;g++) {
 		if (mpz_get_ui(a.array[g]) != g) {
@@ -216,6 +208,39 @@ static char * test_copy() {
 	return 0;
 }
 
+// Test the array equal util.
+static char * test_equal() {
+	mpz_array a, b;
+	mpz_t p;
+	size_t g;
+
+	mpz_init(p);
+	array_init(&a, 4); // to small
+	array_init(&b, 4); // to small
+
+	for(g=0;g<10;g++) {
+		mpz_set_ui(p, g);
+		array_add(&a, p);
+		array_add(&b, p);
+	}
+
+	if (!array_equal(&a, &b)) {
+		return "array a and b differ!";
+	}
+
+	array_add(&b, p);
+
+	if (array_equal(&a, &b)) {
+		return "array a and b do not differ!";
+	}
+
+	array_clear(&a);
+	array_clear(&b);
+	mpz_clear(p);
+
+	return 0;
+}
+
 // Execute all tests.
 int main(int argc, char **argv) {
 	
@@ -238,6 +263,9 @@ int main(int argc, char **argv) {
 
 	printf("Testing msort_2                ");
 	test_evaluate(test_msort_2());
+
+	printf("Testing equal                  ");
+	test_evaluate(test_equal());
 
 	test_end();
 }

@@ -24,6 +24,8 @@ void array_clear(mpz_array *a);
 
 int array_swap(mpz_array *a, mpz_array *b);
 
+int array_equal(mpz_array *a, mpz_array *b);
+
 void array_print(mpz_array *a);
 
 size_t array_of_file(mpz_array *a, const char *filename);
