@@ -44,6 +44,7 @@ static char * test_to_file() {
 	count = array_to_file(&a, "test/test.lst");
 	if (count == 0) return "Can't save to test/test.lst";
 	if (a.used != count) return "Array size and write count do not match";
+	array_clear(&a);
 	return 0;
 }
 
@@ -61,6 +62,8 @@ static char * test_of_file() {
 		if (mpz_cmp(a.array[i], b.array[i]) != 0)
 			return "test/test.lst dose not contain the test data";
 	}
+	array_clear(&a);
+	array_clear(&b);
 	return 0;
 }
 
