@@ -31,6 +31,7 @@ void add_test_data(mpz_array *a) {
 	array_add(a, b);
 	mpz_set_str(b, "8453453534537", 10);
 	array_add(a, b);
+	mpz_clear(b);
 }
 
 // Loads an array from an file.

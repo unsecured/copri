@@ -28,13 +28,13 @@ static char * test() {
 
 	mpz_init_set_str(b, "317", 10);
 	array_add(&array_expect, b);
-	mpz_init_set_str(b, "577", 10);
+	mpz_set_str(b, "577", 10);
 	array_add(&array_expect, b);
-	mpz_init_set_str(b, "727", 10);
+	mpz_set_str(b, "727", 10);
 	array_add(&array_expect, b);
-	mpz_init_set_str(b, "196463", 10);
+	mpz_set_str(b, "196463", 10);
 	array_add(&array_expect, b);
-	mpz_init_set_str(b, "346063", 10);
+	mpz_set_str(b, "346063", 10);
 	array_add(&array_expect, b);
 
 	// primes: 401, [577], 727, 863

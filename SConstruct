@@ -14,8 +14,10 @@ env = Environment(
 AddOption("--test", action="store_true", dest="test", default=False, help="build tests")
 AddOption("--no-omp", action="store_false", dest="omp", default=True, help="don't use OpenMP multithreading")
 AddOption("--run-test", action="store_true", dest="runtest", default=False, help="run the tests")
+AddOption("--valgrind", action="store_true", dest="valgrind", default=False, help="run the tests with valgrind")
 
 env['BUILD_TESTS'] = GetOption('test')
+env['VALGRIND'] = GetOption('valgrind')
 if GetOption('runtest'):
 	env['BUILD_TESTS'] = True
 	env['RUN_TESTS'] = True
@@ -88,7 +90,10 @@ if env['BUILD_TESTS']:
 			deps = [test]
 			if prev_cmd:
 				deps.append(prev_cmd)
-			cmd = Command(rel+'_test', deps, test[0].abspath)			
+			if env['VALGRIND']:
+				cmd = Command(rel+'_test', deps, 'valgrind -q --leak-check=full '+test[0].path)
+			else:
+				cmd = Command(rel+'_test', deps, test[0].path)			
 			AlwaysBuild(cmd)
 			prev_cmd = cmd
 	

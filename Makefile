@@ -1,10 +1,12 @@
-.PHONY: all clean install doc package copri test
+.PHONY: all clean install doc package copri test valgrind
 default:    copri
 all:	doc test install
 copri:
 	scons
 test:
 	scons --run-test
+valgrind:
+	scons --run-test --valgrind
 clean:
 	scons -c --test
 	rm -rf docs
