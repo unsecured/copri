@@ -8,7 +8,7 @@ env = Environment(
     CRYPTO = 1,
     BUILD_TESTS = 0,
     RUN_TESTS = 0,
-    LIBS = ['copri', 'pool', 'array', 'gmp']
+    LIBS = ['copri', 'pool', 'divide_conquer', 'array', 'stack', 'gmp']
 )
 
 AddOption("--test", action="store_true", dest="test", default=False, help="build tests")
@@ -60,7 +60,11 @@ if env['BUILD_TESTS']:
 
 env.Library('array', ['array.c'], LIBS = ['gmp'])
 
+env.Library('stack', ['stack.c'], LIBS = ['gmp'])
+
 env.Library('pool', ['pool.c'], LIBS = ['gmp', 'array'])
+
+env.Library('divide_conquer', ['divide_conquer.c'], LIBS = ['gmp', 'array'])
 
 env.Library('copri', ['copri.c'])
 
@@ -72,6 +76,7 @@ if env['BUILD_TESTS']:
 	for name in [
 		'array',
 		'arrayio',
+		'stack',
 		'prod',
 		'twopower',
 		'gcdppippo',
@@ -82,7 +87,8 @@ if env['BUILD_TESTS']:
 		'cbmerge',
 		'cb',
 		'findfactor',
-		'pool'
+		'pool',
+		'divideconquer'
 		]:
 		rel = 'test/test-'+name
 		test = env.Program(rel, [rel+'.c'])
