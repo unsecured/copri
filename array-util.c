@@ -16,14 +16,15 @@
 // happy.
 int main(int argc, char **argv) {
 	mpz_array s;
-	size_t count;
-	int c, vflg = 0, sflg = 0, errflg = 0, r = 0;
+	mpz_t sum_bits, avg;
+	size_t count, i, size, size_min = 0, size_max = 0;
+	int c, vflg = 0, iflg = 0, sflg = 0, errflg = 0, r = 0;
 	char *filename = "primes.lst";
 	char *out_filename = NULL;
 
 	// #### argument parsing
 	// Boring `getopt` argument parsing.
-	while ((c = getopt(argc, argv, ":vso:")) != -1) {
+	while ((c = getopt(argc, argv, ":vsio:")) != -1) {
 		switch(c) {
 		case 'o':
 			out_filename = optarg;
@@ -33,6 +34,9 @@ int main(int argc, char **argv) {
 			break;
 		case 'v':
 			vflg++;
+			break;
+		case 'i':
+			iflg++;
 			break;
 		case ':':
 			fprintf(stderr, "Option -%c requires an operand\n", optopt);
@@ -44,9 +48,10 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if (optind < argc) {
+	if (optind == argc - 1) {
 		filename = argv[optind];
-		if (optind + 1 < argc) errflg++;
+	} else {
+		errflg++;
 	}
 
 	if (sflg > 0 && out_filename == NULL) {
@@ -57,11 +62,17 @@ int main(int argc, char **argv) {
 	// Print the usage and exit if an error occurred during argument parsing.
 	if (errflg) {
 		fprintf(stderr, "usage: [-vs] [-o FILE] [file]\n"\
+                        "\n\t-i        inspect the array"\
                         "\n\t-o FILE   the output file"\
                         "\n\t-v        be more verbose"\
                         "\n\t-s        sort the input"\
                         "\n\n");
 		exit(2);
+	}
+
+	// Default to inspect.
+	if (!sflg) {
+		iflg++;
 	}
 
 	// Load the integers.
@@ -88,6 +99,30 @@ int main(int argc, char **argv) {
 		if (vflg > 0)
 			printf("sorting the input integers...\n");
 		array_msort(&s);
+	}
+
+	if (iflg > 0) {
+		printf("count: %zu\n", s.used);
+		mpz_init_set_ui(sum_bits, 0);
+		for(i=0; i<s.used; i++) {
+			size = mpz_sizeinbase(s.array[i], 2);
+			mpz_add_ui(sum_bits, sum_bits, size);
+			if (size_min == 0 || size_min > size)
+				size_min = size;
+			if (size_max == 0 || size_max < size)
+				size_max = size;
+		}
+		mpz_init(avg);
+		mpz_cdiv_q_ui(avg, sum_bits, s.used);
+
+		if (size_min == size_max) {
+			printf("size (all): %zu bit\n", size_min);
+		} else {
+			gmp_printf("size:\n  - min: %zu bit\n  - max: %zu bit\n  - avg: %Zu bit\n", size_min, size_max, avg);
+		}
+		mpz_clear(avg);
+		mpz_clear(sum_bits);
+
 	}
 
 	if (out_filename != NULL) {

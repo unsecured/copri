@@ -51,7 +51,7 @@ static char * test_merge_mul(size_t n) {
 	recursive_clock = end_array_prod - end_divide_conquer;
 
 	if (iterative_clock > recursive_clock) {
-		printf("WARN: slower (%ju) ", (uintmax_t)(iterative_clock-recursive_clock));
+		printf("WARN: slower (%ju) ", (clock_t)(iterative_clock-recursive_clock));
 	}
 
 	array_clear(&a);

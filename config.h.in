@@ -9,3 +9,7 @@
 #if %(crypto)d
 #define USE_CRYPTO 1
 #endif
+
+#if %(inspect_pool)d
+#define INSPECT_POOL 1
+#endif

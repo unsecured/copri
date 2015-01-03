@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <gmp.h>
 #include "copri.h"
+#include "config.h"
 
 // Start by defining an neat looking banner.
 #define PRINT_BANNER printf(""\
@@ -92,6 +93,15 @@ int main(int argc, char **argv) {
 	// Print the banner.
 	if (vflg > 0) {
 		PRINT_BANNER;
+#if INSPECT_POOL
+		printf("WARNING: This build uses the `inspect-pool` debug option!\n");
+#endif
+#if !(USE_OPENMP)
+		printf("WARNING: This build does not use OpenMP multithreading!!!\n");
+#endif
+#if INSPECT_POOL || !(USE_OPENMP)
+		printf("\n");
+#endif
 	}
 
 	// Load the keys.
@@ -163,6 +173,9 @@ int main(int argc, char **argv) {
 
 	array_clear(&p);
 	array_clear(&s);
+	if (vflg > 0)
+		pool_inspect(&pool);
+	pool_clear(&pool);
 
 	return r;
 }

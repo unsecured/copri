@@ -65,6 +65,12 @@ size_t array_divide_conquer(mpz_pool *pool, mpz_t ret, mpz_array *in, void(*merg
 		}
 
 		mpz_set(ret, x);
+
+		mpz_clear(a);
+		mpz_clear(b);
+		mpz_clear(x);
+		mpz_ui_pair_stack_clear(stack);
 	}
+
 	return n;
 }

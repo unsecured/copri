@@ -8,6 +8,7 @@ env = Environment(
     CRYPTO = 1,
     BUILD_TESTS = 0,
     RUN_TESTS = 0,
+    INSPECT_POOL = 0,
     LIBS = ['copri', 'pool', 'divide_conquer', 'array', 'stack', 'gmp']
 )
 
@@ -15,9 +16,11 @@ AddOption("--test", action="store_true", dest="test", default=False, help="build
 AddOption("--no-omp", action="store_false", dest="omp", default=True, help="don't use OpenMP multithreading")
 AddOption("--run-test", action="store_true", dest="runtest", default=False, help="run the tests")
 AddOption("--valgrind", action="store_true", dest="valgrind", default=False, help="run the tests with valgrind")
+AddOption("--inspect-pool", action="store_true", dest="inspect_pool", default=False, help="inspect the used integer pool (slower)")
 
 env['BUILD_TESTS'] = GetOption('test')
 env['VALGRIND'] = GetOption('valgrind')
+env['INSPECT_POOL'] = GetOption('inspect_pool')
 if GetOption('runtest'):
 	env['BUILD_TESTS'] = True
 	env['RUN_TESTS'] = True
@@ -118,6 +121,7 @@ def config_h_build(target, source, env):
 		"version_str": "0.9",
 		"openmp": env['OMP'],
 		"crypto": env['CRYPTO'],
+		"inspect_pool": env['INSPECT_POOL']
 	}
 
 	for a_target, a_source in zip(target, source):

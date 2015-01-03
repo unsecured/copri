@@ -35,3 +35,4 @@ config.h
 config.log
 .sconf_temp
 test/test.lst
+/Default/
