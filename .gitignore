@@ -5,6 +5,7 @@ primes.lst
 docs
 gen
 app
+app-merge
 app-n2
 csv2gmp
 array-util
