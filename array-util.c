@@ -10,21 +10,27 @@
 #include <gmp.h>
 #include "copri.h"
 
+#define MAX_CHUNK_NAME_LENGTH 256
+
 // The generic `main` function.
 //
 // Define all variables at the beginning to make the C99 compiler
 // happy.
 int main(int argc, char **argv) {
-	mpz_array s;
+	mpz_array s, m, b;
 	mpz_t sum_bits, avg;
-	size_t count, i, size, size_min = 0, size_max = 0;
-	int c, vflg = 0, iflg = 0, sflg = 0, errflg = 0, r = 0;
+	size_t count, i, j, x, size, size_min = 0, size_max = 0;
+	int c, vflg = 0, iflg = 0, sflg = 0, lflg = 0, bflg = 0, cflg = 0, errflg = 0, r = 0;
 	char *filename = "primes.lst";
 	char *out_filename = NULL;
+	char chunk_name[MAX_CHUNK_NAME_LENGTH];
+	long int length = 0;
+	long int seek = 0;
+	unsigned int padding = 9;
 
 	// #### argument parsing
 	// Boring `getopt` argument parsing.
-	while ((c = getopt(argc, argv, ":vsio:")) != -1) {
+	while ((c = getopt(argc, argv, ":vsicb:l:o:")) != -1) {
 		switch(c) {
 		case 'o':
 			out_filename = optarg;
@@ -37,6 +43,17 @@ int main(int argc, char **argv) {
 			break;
 		case 'i':
 			iflg++;
+			break;
+		case 'c':
+			cflg++;
+			break;
+		case 'l':
+			lflg++;
+			length = strtol(optarg, NULL, 0);
+			break;
+		case 'b':
+			bflg++;
+			seek = strtol(optarg, NULL, 0);
 			break;
 		case ':':
 			fprintf(stderr, "Option -%c requires an operand\n", optopt);
@@ -64,6 +81,9 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "usage: [-vs] [-o FILE] [file]\n"\
                         "\n\t-i        inspect the array"\
                         "\n\t-o FILE   the output file"\
+						"\n\t-l length max values to output"\
+						"\n\t-b count  skip first count (seek)"\
+						"\n\t-c        create chunks"\
                         "\n\t-v        be more verbose"\
                         "\n\t-s        sort the input"\
                         "\n\n");
@@ -91,7 +111,7 @@ int main(int argc, char **argv) {
 		return 3;
 	}
 
-	if (out_filename != NULL && vflg > 0) {
+	if (out_filename != NULL && vflg > 0 && !(cflg && lflg)) {
 		printf("output is going to be saved in '%s'\n", out_filename);
 	}
 
@@ -126,12 +146,71 @@ int main(int argc, char **argv) {
 	}
 
 	if (out_filename != NULL) {
-		if (vflg > 0)
-			printf("storing output in '%s'\n", out_filename);
-		count = array_to_file(&s, out_filename);
-		if (s.used != count) {
-			fprintf(stderr, "Array size and write count do not match\n");
-			return 4;
+		if (cflg && lflg) {
+			// generate the chunks
+			if (vflg > 0)
+				printf("creating chunks with prefix '%s' and size: %zu\n", out_filename, length);
+			b = s;
+			s = m;
+			array_init(&s, 10);
+			j = 0;
+			x = seek;
+
+			// get the padding size
+			padding = snprintf ( chunk_name, MAX_CHUNK_NAME_LENGTH, "%zu", b.used-seek);
+
+			for(i=seek; i<=b.used; i++) {
+				if (j >= length || i == b.used) {
+					if (snprintf ( chunk_name, MAX_CHUNK_NAME_LENGTH, "%s_%0*zu-%0*zu.lst", out_filename, padding, x, padding, (i-1)) < 0) {
+						fprintf(stderr, "Chunk name encoding error!\n");
+						return 5;
+					}
+					printf("writing chunk '%s'\n", chunk_name);
+
+					count = array_to_file(&s, chunk_name);
+					if (s.used != count) {
+						fprintf(stderr, "Array size and write count do not match\n");
+						return 4;
+					}
+
+					array_clear(&s);
+					array_init(&s, 10);
+
+					j = 0;
+					x = i;
+				}
+				if (i<b.used) {
+					array_add(&s, b.array[i]);
+					j++;
+				}
+			}
+			array_clear(&b);
+
+		} else {
+			// just process seek and length
+			if (vflg > 0)
+				printf("storing output in '%s'\n", out_filename);
+
+			if (lflg || bflg) {
+				b = s;
+				s = m;
+				array_init(&s, 10);
+				j = 0;
+				for(i=seek; i<b.used; i++) {
+					if (lflg) {
+						if (j >= length) break;
+						j++;
+					}
+					array_add(&s, b.array[i]);
+				}
+				array_clear(&b);
+			}
+
+			count = array_to_file(&s, out_filename);
+			if (s.used != count) {
+				fprintf(stderr, "Array size and write count do not match\n");
+				return 4;
+			}
 		}
 	}
 

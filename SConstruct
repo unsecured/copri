@@ -108,6 +108,8 @@ if env['BUILD_TESTS']:
 	
 env.Program('app', ['app.c'])
 
+env.Program('app-merge', ['app-merge.c'])
+
 env.Program('app-n2', ['app-n2.c'], LIBS = ['array', 'copri', 'gmp'])
 
 env.Program('array-util', ['array-util.c'], LIBS = ['array', 'gmp'])
