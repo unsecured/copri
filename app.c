@@ -39,13 +39,13 @@ int main(int argc, char **argv) {
 	mpz_array s, p, out;
 	mpz_pool pool;
 	size_t count, i;
-	int c, vflg = 0, sflg = 0, rflg = 0, errflg = 0, r = 0;
+	int c, vflg = 0, sflg = 0, rflg = 0, errflg = 0, jflg = 0, r = 0;
 	char *filename = "primes.lst";
 	char *cb_file = NULL;
 
 	// #### argument parsing
 	// Boring `getopt` argument parsing.
-	while ((c = getopt(argc, argv, ":svrb:")) != -1) {
+	while ((c = getopt(argc, argv, ":svrjb:")) != -1) {
 		switch(c) {
 		case 'b':
 			cb_file = optarg;
@@ -58,6 +58,9 @@ int main(int argc, char **argv) {
 			break;
 		case 'r':
 			rflg++;
+			break;
+		case 'j':
+			jflg++;
 			break;
 		case ':':
 			fprintf(stderr, "Option -%c requires an operand\n", optopt);
@@ -84,6 +87,7 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "usage: [-vsr] [file]\n"\
                         "\n\t-b FILE   store the coprime base in FILE"\
                         "\n\t-v        be more verbose"\
+						"\n\t-j        use json as output format"\
                         "\n\t-r        output the found coprimes in raw gmp format"\
                         "\n\t-s        only check if there are coprimes"\
                         "\n\n");
@@ -92,15 +96,17 @@ int main(int argc, char **argv) {
 
 	// Print the banner.
 	if (vflg > 0) {
-		PRINT_BANNER;
+		if (jflg == 0) {
+			PRINT_BANNER;
+		} else {
+			printf("{\"type\":\"info\",\"msg\":\"copri (c) Martin Wind, Gerhard Reithofer\"}\n");
+			fflush(stdout);
+		}
 #if INSPECT_POOL
-		printf("WARNING: This build uses the `inspect-pool` debug option!\n");
+		fprintf(stderr, "WARNING: This build uses the `inspect-pool` debug option!\n");
 #endif
 #if !(USE_OPENMP)
-		printf("WARNING: This build does not use OpenMP multithreading!!!\n");
-#endif
-#if INSPECT_POOL || !(USE_OPENMP)
-		printf("\n");
+		fprintf(stderr, "WARNING: This build does not use OpenMP multithreading!!!\n");
 #endif
 	}
 
@@ -121,12 +127,16 @@ int main(int argc, char **argv) {
 		return 3;
 	}
 	// Print the key count.
-	if (vflg > 0) {
+	if (vflg > 0 && jflg == 0) {
 		printf("%zu public keys loaded\n", s.used);
 		if (cb_file != NULL)
 			printf("cb is going to be saved in '%s'\n", cb_file);
 		printf("Starting factorization...\n");
+	} else if (jflg > 0) {
+		printf("{\"type\":\"start\",\"msg\":\"Starting factorization\",\"count\":%zu}\n", s.used);
+		fflush(stdout);
 	}
+
 
 	// Computing a coprime base for a finite set [Algorithm 18.1](copri.html#computing-a-coprime-base-for-a-finite-set).
 	array_init(&p, s.used);
@@ -134,7 +144,13 @@ int main(int argc, char **argv) {
 
 	if (cb_file != NULL) {
 		if (vflg > 0) {
-			printf("storing cb in '%s'\n", cb_file);
+			if (jflg == 0) {
+				printf("storing cb in '%s'\n", cb_file);
+			} else {
+				printf("{\"type\":\"store\",\"msg\":\"Storing coprimebase\",\"file\":\"%s\"}\n", cb_file);
+				fflush(stdout);
+			}
+
 		}
 		array_to_file(&p, cb_file);
 	}
@@ -142,13 +158,33 @@ int main(int argc, char **argv) {
 
 	// Check if we have found more coprime bases.
 	if (p.used == s.used) {
-		if (vflg > 0)
-			printf("No coprime pairs found :-(\n");
-		r = 1;
+		if (vflg > 0) {
+			if (jflg == 0) {
+				printf("No coprime pairs found :-(\n");
+			} else {
+				printf("{\"type\":\"info\",\"msg\":\"No coprime pairs found\"}\n");
+				fflush(stdout);
+			}
+		}
+		r = 0;
 	} else {
-		if (vflg > 0 || sflg > 0)
-			printf("Found ~%zu coprime pairs!!!\nSearching factors...\n", (p.used - s.used));
+		if (vflg > 0 && jflg == 0) {
+			printf("Found ~%zu coprime pairs!!!\n", (p.used - s.used));
+		}
+		if (jflg > 0) {
+			printf("{\"type\":\"interim result\",\"msg\":\"Found coprime pairs\",\"count\":%zu}\n", (p.used - s.used));
+			fflush(stdout);
+		}
+
 		if (sflg == 0) {
+			if (vflg > 0) {
+				if (jflg == 0) {
+					printf("Searching factors...\n");
+				} else {
+					printf("{\"type\":\"info\",\"msg\":\"Searching factors\"}\n");
+					fflush(stdout);
+				}
+			}
 			array_init(&out, 9);
 			// Use [Algorithm 21.2](copri.html#factoring-a-set-over-a-coprime-base) to find the coprimes in the coprime base.
 			array_find_factors(&pool, &out, &s, &p);
@@ -158,7 +194,10 @@ int main(int argc, char **argv) {
 				if ((out.used % 3) != 0) {
 					fprintf(stderr, "Find factors returned an invalid array\n");
 				} else {
-					if (rflg) {
+					if (jflg > 0) {
+						for(i = 0; i < out.used; i+=3)
+							gmp_printf("{\"type\":\"result\",\"msg\":\"Found factors\",\"key\":\"%Zu\",\"p\":\"%Zu\",\"q\":\"%Zu\"}\n", out.array[i], out.array[i+1], out.array[i+2]);
+					} else if (rflg > 0) {
 						for(i = 0; i < out.used; i++)
 							mpz_out_raw(stdout, out.array[i]);
 					} else {
@@ -173,9 +212,12 @@ int main(int argc, char **argv) {
 
 	array_clear(&p);
 	array_clear(&s);
-	if (vflg > 0)
+	if (vflg > 0 && jflg == 0)
 		pool_inspect(&pool);
 	pool_clear(&pool);
-
+	if (jflg > 0) {
+		printf("{\"type\":\"end\",\"msg\":\"Finished\"}\n");
+		fflush(stdout);
+	}
 	return r;
 }

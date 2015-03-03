@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "usage: [-vs] [-o FILE] [file]\n"\
                         "\n\t-i        inspect the array"\
                         "\n\t-o FILE   the output file"\
-						"\n\t-l length max values to output"\
+						"\n\t-l length max values to output or chunk size"\
 						"\n\t-b count  skip first count (seek)"\
 						"\n\t-c        create chunks"\
                         "\n\t-v        be more verbose"\
