@@ -114,6 +114,8 @@ env.Program('app-n2', ['app-n2.c'], LIBS = ['array', 'copri', 'gmp'])
 
 env.Program('array-util', ['array-util.c'], LIBS = ['array', 'gmp'])
 
+env.Program('balanced-split', ['balanced-split.c'], LIBS = ['array', 'gmp'])
+
 env.Program('csv2gmp', ['csv2gmp.c'], LIBS = ['gmp'])
 
 def config_h_build(target, source, env):
