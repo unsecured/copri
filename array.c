@@ -227,3 +227,28 @@ void array_msort(mpz_array *a) {
 	}
 	array_clear(&b);
 }
+
+// Test if the array contains the integer.
+int array_contains(mpz_array *a, const mpz_t integer) {
+	size_t i;
+	for (i = 0; i < a->used; i++) {
+		if (mpz_cmp(a->array[i], integer) == 0)
+			return 1;
+	}
+	return 0;
+}
+
+// Returns an sorted array with unique values.
+// This function expects an sorted array as input.
+void array_unique(mpz_array *uniques, mpz_array *sorted) {
+	size_t i;
+	for (i = 0; i < sorted->used; i++) {
+		if ((i + 1) == sorted->used) {
+			array_add(uniques, sorted->array[i]);
+		} else {
+			if (mpz_cmp(sorted->array[i], sorted->array[i+1]) != 0) {
+				array_add(uniques, sorted->array[i]);
+			}
+		}
+	}
+}

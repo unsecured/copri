@@ -241,6 +241,74 @@ static char * test_equal() {
 	return 0;
 }
 
+// Test the array contains util.
+static char * test_contains() {
+	mpz_array a;
+	mpz_t p;
+	size_t g;
+
+	mpz_init(p);
+	array_init(&a, 4); // to small
+
+	for(g=0;g<10;g++) {
+		mpz_set_ui(p, g);
+		array_add(&a, p);
+	}
+
+	mpz_set_ui(p, 7);
+
+	if (!array_contains(&a, p)) {
+		return "array contains wrong on containing integer";
+	}
+
+	mpz_set_ui(p, 12);
+
+	if (array_contains(&a, p)) {
+		return "array contains wrong on not containing integer";
+	}
+
+	array_clear(&a);
+	mpz_clear(p);
+
+	return 0;
+}
+
+// Test the array unique util.
+static char * test_unique() {
+	mpz_array sorted, uniques;
+	mpz_t p;
+	size_t g;
+	//array_unique
+	mpz_init(p);
+	array_init(&sorted, 4); // to small
+	array_init(&uniques, 4); // to small
+
+	for(g=0;g<10;g++) {
+		mpz_set_ui(p, g);
+		array_add(&sorted, p);
+		array_add(&sorted, p);
+	}
+
+	if (sorted.used != 20) {
+		return "wrong sorted size";
+	}
+
+	array_unique(&uniques, &sorted);
+
+	if (uniques.used != 10) {
+		return "wrong uniques size";
+	}
+
+	for(g=0;g<10;g++) {
+		if (mpz_get_ui(uniques.array[g]) != g) {
+			printf("%zu != %zu at %zu\n", mpz_get_ui(uniques.array[g]), g, g);
+			return "error";
+		}
+	}
+
+	return 0;
+}
+
 // Execute all tests.
 int main(int argc, char **argv) {
 	
@@ -266,6 +334,12 @@ int main(int argc, char **argv) {
 
 	printf("Testing equal                  ");
 	test_evaluate(test_equal());
+
+	printf("Testing contains               ");
+	test_evaluate(test_contains());
+
+	printf("Testing unique                 ");
+	test_evaluate(test_unique());
 
 	test_end();
 }

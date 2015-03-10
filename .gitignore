@@ -37,3 +37,4 @@ config.log
 .sconf_temp
 test/test.lst
 /Default/
+b_*

@@ -34,4 +34,8 @@ size_t array_to_file(mpz_array *a, const char *filename);
 
 void array_msort(mpz_array *a);
 
+int array_contains(mpz_array *a, const mpz_t integer);
+
+void array_unique(mpz_array *uniques, mpz_array *sorted);
+
 #endif /* ARRAY_H */

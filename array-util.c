@@ -17,10 +17,10 @@
 // Define all variables at the beginning to make the C99 compiler
 // happy.
 int main(int argc, char **argv) {
-	mpz_array s, m, b;
+	mpz_array s, m, b, uniques;
 	mpz_t sum_bits, avg;
 	size_t count, i, j, x, size, size_min = 0, size_max = 0;
-	int c, vflg = 0, iflg = 0, sflg = 0, lflg = 0, bflg = 0, cflg = 0, errflg = 0, r = 0;
+	int c, vflg = 0, iflg = 0, sflg = 0, lflg = 0, bflg = 0, cflg = 0, uflg = 0, errflg = 0, r = 0;
 	char *filename = "primes.lst";
 	char *out_filename = NULL;
 	char chunk_name[MAX_CHUNK_NAME_LENGTH];
@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 
 	// #### argument parsing
 	// Boring `getopt` argument parsing.
-	while ((c = getopt(argc, argv, ":vsicb:l:o:")) != -1) {
+	while ((c = getopt(argc, argv, ":vsicub:l:o:")) != -1) {
 		switch(c) {
 		case 'o':
 			out_filename = optarg;
@@ -43,6 +43,9 @@ int main(int argc, char **argv) {
 			break;
 		case 'i':
 			iflg++;
+			break;
+		case 'u':
+			uflg++;
 			break;
 		case 'c':
 			cflg++;
@@ -86,6 +89,7 @@ int main(int argc, char **argv) {
 						"\n\t-c        create chunks"\
                         "\n\t-v        be more verbose"\
                         "\n\t-s        sort the input"\
+						"\n\t-u        count uniques"\
                         "\n\n");
 		exit(2);
 	}
@@ -115,10 +119,17 @@ int main(int argc, char **argv) {
 		printf("output is going to be saved in '%s'\n", out_filename);
 	}
 
-	if (sflg > 0) {
+	if (sflg > 0 || uflg > 0) {
 		if (vflg > 0)
 			printf("sorting the input integers...\n");
 		array_msort(&s);
+	}
+
+	if (uflg > 0) {
+		array_init(&uniques, 10);
+		array_unique(&uniques, &s);
+		printf("unique: %zu / %zu\n", uniques.used, s.used);
+		array_clear(&uniques);
 	}
 
 	if (iflg > 0) {
@@ -131,6 +142,7 @@ int main(int argc, char **argv) {
 				size_min = size;
 			if (size_max == 0 || size_max < size)
 				size_max = size;
+
 		}
 		mpz_init(avg);
 		mpz_cdiv_q_ui(avg, sum_bits, s.used);
