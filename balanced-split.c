@@ -18,8 +18,8 @@
 // happy.
 int main(int argc, char **argv) {
 	mpz_array s, uniques, o;
-	size_t count, chunk_count = 2, length, j, x, wc;
-	int c, vflg = 0, lflg = 0, errflg = 0, r = 0;
+	size_t count, chunk_count = 2, length, j, wc;
+	int c, vflg = 0, lflg = 0, nflg = 0, errflg = 0, r = 0;
 	char *filename = "primes.lst";
 	char *out_filename = NULL;
 	char chunk_name[MAX_CHUNK_NAME_LENGTH];
@@ -34,6 +34,9 @@ int main(int argc, char **argv) {
 		switch(c) {
 		case 'o':
 			out_filename = optarg;
+			break;
+		case 'n':
+			nflg++;;
 			break;
 		case 'v':
 			vflg++;
@@ -63,6 +66,7 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "usage: [-v] [-o FILE] [-l LENGTH] [file]\n"\
                         "\n\t-o FILE   the output file prefix"\
 						"\n\t-l LEVEL  the level of the tree"\
+						"\n\t-n        do not sort and unique input"\
                         "\n\t-v        be more verbose"\
                         "\n\n");
 		exit(2);
@@ -88,22 +92,26 @@ int main(int argc, char **argv) {
 		printf("output is going to be saved in '%s'\n", out_filename);
 	}
 
-	if (vflg > 0)
-		printf("sorting the input integers...\n");
-	array_msort(&s);
+	if (nflg == 0) {
+		if (vflg > 0)
+			printf("sorting the input integers...\n");
+		array_msort(&s);
 
-	if (vflg > 0)
-		printf("finding unique integers...\n");
-	array_init(&uniques, 10);
-	array_unique(&uniques, &s);
-	printf("unique: %zu / %zu\n", uniques.used, s.used);
+		if (vflg > 0)
+			printf("finding unique integers...\n");
+		array_init(&uniques, 10);
+		array_unique(&uniques, &s);
+		printf("unique: %zu / %zu\n", uniques.used, s.used);
 
-	count = uniques.used;
+		count = uniques.used;
+	} else {
+		count = s.used;
+	}
 
 	for (i=1; i<level; i++) {
 		chunk_count *= 2;
 	}
-
+	
 	if (vflg > 0)
 		printf("using %zu chunks\n", chunk_count);
 
@@ -162,7 +170,12 @@ int main(int argc, char **argv) {
 			array_init(&o, length);
 
 			for (j=0; j<length; j++) {
-				array_add(&o, s.array[index+j]);
+				if (nflg == 0) {
+					array_add(&o, uniques.array[index+j]);
+				} else {
+					array_add(&o, s.array[index+j]);
+				}
+				
 			}
 
 			if (snprintf ( chunk_name, MAX_CHUNK_NAME_LENGTH, "%s_%0*zu-%0*zu.lst", out_filename, padding, index, padding, index+j) < 0) {
