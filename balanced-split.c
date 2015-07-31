@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 
 	// #### argument parsing
 	// Boring `getopt` argument parsing.
-	while ((c = getopt(argc, argv, ":vl:o:")) != -1) {
+	while ((c = getopt(argc, argv, ":vnl:o:")) != -1) {
 		switch(c) {
 		case 'o':
 			out_filename = optarg;
