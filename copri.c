@@ -5,7 +5,7 @@
 
 // Implementation of "Factoring into coprimes in essentially linear time".
 
-// # algorithm
+// # Algorithm
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -243,7 +243,7 @@ void append_cb(mpz_pool *pool, mpz_array *out, const mpz_t a, const mpz_t b) {
 
 // Compute the product of the values in `mpz_t array` and store it in `mpz_t rot`.
 // `size_t from` is the start index and `size_t to` is the end index.
-// 
+//
 // This function expects initialized mpz integers in all array fields between `from` and `to`.
 //
 // Algorithm 14.1 [PDF page 19](http://cr.yp.to/lineartime/dcba-20040404.pdf)
@@ -252,13 +252,13 @@ void append_cb(mpz_pool *pool, mpz_array *out, const mpz_t a, const mpz_t b) {
 void prod(mpz_pool *pool, mpz_t rot, mpz_t * array, size_t from, size_t to) {
 	size_t n = to - from;
 	mpz_t x, y;
-	
+
 	//  If #S = 1: Find a ∈ S. Print a. Stop.
 	if (n == 0) {
 		mpz_set(rot, array[from]);
 		return;
 	}
-	
+
 	// Select T ⊆ S with #T = b#S/2c.
 	//
 	// Compute X ← prod(T).

@@ -39,3 +39,12 @@ test/test.lst
 /Default/
 b_*
 balanced-split
+scanio_chunks
+t
+base_sio1024__03890000-03899999.lst
+copri-graph.pdf
+copri.pdf
+primes_base.lst
+scanio1024bit_keys.lst
+scanioAll_keys.lst
+.package
