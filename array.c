@@ -52,7 +52,10 @@ void array_add_array(mpz_array *target, mpz_array *src) {
 	size_t i;
 	if ((target->size - target->used) < src->size) {
 		target->size = src->size + target->used;
-		target->array = (mpz_t *)realloc(target->array, target->size * sizeof(mpz_t));
+		target->array = (mpz_t *)realloc(
+			target->array,
+			target->size * sizeof(mpz_t)
+		);
 	}
 	for (i = 0; i < src->used; i++) {
 		mpz_init_set(target->array[target->used++], src->array[i]);
@@ -180,7 +183,8 @@ size_t array_to_file(mpz_array *a, const char *filename) {
 // ## sort a array
 
 // merge two sorted lists
-void array_msort_merge(mpz_array *a, size_t iLeft, size_t iRight, size_t iEnd, mpz_array *b) {
+void array_msort_merge(mpz_array *a, size_t iLeft,
+size_t iRight, size_t iEnd, mpz_array *b) {
 	int i0 = iLeft;
 	int i1 = iRight;
 	int j;
@@ -188,7 +192,10 @@ void array_msort_merge(mpz_array *a, size_t iLeft, size_t iRight, size_t iEnd, m
 	// While there are elements in the left or right lists
 	for (j = iLeft; j < iEnd; j++) {
 		// If left list head exists and is <= existing right list head
-		if (i0 < iRight && (i1 >= iEnd || mpz_cmp(a->array[i0], a->array[i1]) <= 0)) {
+		if (i0 < iRight && (i1 >= iEnd || mpz_cmp(
+			a->array[i0],
+			a->array[i1]
+		) <= 0)) {
 			mpz_set(b->array[j], a->array[i0]);
 			i0 = i0 + 1;
 		} else {
@@ -217,7 +224,13 @@ void array_msort(mpz_array *a) {
 		for (i = 0; i < n; i = i + 2 * width) {
 			// Merge two runs: A[i:i+width-1] and A[i+width:i+2*width-1] to B[]
 			// or copy A[i:n-1] to B[] ( if(i+width >= n) )
-			array_msort_merge(a, i, MIN(i+width, n), MIN(i+2*width, n), &b);
+			array_msort_merge(
+				a,
+				i,
+				MIN(i+width, n),
+				MIN(i+2*width, n),
+				&b
+			);
 		}
 
 		// Now work array B is full of runs of length 2*width.

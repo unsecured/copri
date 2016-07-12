@@ -34,7 +34,8 @@ void pool_init(mpz_pool *p, size_t size) {
 void pool_clear(mpz_pool *p) {
 	size_t i;
 	if (p->used > 0) {
-		fprintf(stderr, "Can not clear pool %lx: %zu integers in use!\n", (intptr_t)p, p->used);
+		fprintf(stderr, "Can not clear pool %lx: %zu integers \
+in use!\n", (intptr_t)p, p->used);
 	} else {
 		for (i=0; i<p->size; i++) {
 			mpz_clear(p->array[i]);
@@ -54,10 +55,15 @@ void pool_inspect(mpz_pool *p) {
 	mpz_t avg;
 	mpz_init(avg);
 	mpz_cdiv_q_ui(avg, p->push_sum, p->push_count);
-	printf("\npool: %lx, size: %zu, used: %zu, max used: %zu, avg: %zu bit\n%zu of %zu pushed integers are bigger then the init size of %zu bit.\n", (intptr_t)p, p->size, p->used, p->max_used, mpz_sizeinbase(avg, 2), p->small_count, p->push_count, p->init_bit_size);
+	printf("\npool: %lx, size: %zu, used: %zu, max used: %zu, \
+avg: %zu bit\n%zu of %zu pushed integers are bigger then the \
+init size of %zu bit.\n", (intptr_t)p, p->size, p->used,
+p->max_used, mpz_sizeinbase(avg, 2), p->small_count,
+p->push_count, p->init_bit_size);
 	mpz_clear(avg);
 #else
-	printf("\npool: %lx, size: %zu, used: %zu\n", (intptr_t)p, p->size, p->used);
+	printf("\npool: %lx, size: %zu, used: %zu\n", (intptr_t)p,
+p->size, p->used);
 #endif
 }
 
@@ -67,7 +73,10 @@ void pool_pop(mpz_pool *p, mpz_t ret) {
 #if INSPECT_POOL
 		fprintf(stderr, "Pool %lx to small!\n", (intptr_t)p);
 #endif
-		p->array = (mpz_t *)realloc(p->array, (p->size + POOL_REALLOC_SIZE) * sizeof(mpz_t));
+		p->array = (mpz_t *)realloc(
+			p->array,
+			(p->size + POOL_REALLOC_SIZE) * sizeof(mpz_t)
+		);
 		for (i=p->size; i<(p->size + POOL_REALLOC_SIZE); i++) {
 			mpz_init2(p->array[i], p->init_bit_size);
 		}
@@ -82,7 +91,8 @@ void pool_pop(mpz_pool *p, mpz_t ret) {
 
 void pool_push(mpz_pool *p, mpz_t i) {
 	if (p->used <= 0) {
-		fprintf(stderr, "Can not push integer pool %lx is full!\n", (intptr_t)p);
+		fprintf(stderr, "Can not push integer pool %lx is full!\n",
+		(intptr_t)p);
 	} else {
 #if INSPECT_POOL
 		size_t nbits;
