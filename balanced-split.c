@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 	for (i=1; i<level; i++) {
 		chunk_count *= 2;
 	}
-	
+
 	if (vflg > 0)
 		printf("using %zu chunks\n", chunk_count);
 
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
 				} else {
 					array_add(&o, s.array[index+j]);
 				}
-				
+
 			}
 
 			if (snprintf ( chunk_name, MAX_CHUNK_NAME_LENGTH, "%s_%0*zu-%0*zu.lst", out_filename, padding, index, padding, index+j) < 0) {
@@ -322,7 +322,9 @@ console.log('rest', rest, restRatio);
 	*/
 
 	array_clear(&s);
-	array_clear(&uniques);
+	if (nflg == 0) {
+		array_clear(&uniques);
+	}
 
 	return r;
 }
