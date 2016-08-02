@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
 	mpz_array s, m, b, uniques, filtered;
 	mpz_t sum_bits, avg;
 	size_t count, i, j, x, size, size_min = 0, size_max = 0;
-	int c, vflg = 0, iflg = 0, sflg = 0, lflg = 0, bflg = 0, cflg = 0, uflg = 0, tflg = 0, xflg = 0, errflg = 0, r = 0;
+	int c, vflg = 0, iflg = 0, sflg = 0, lflg = 0, bflg = 0, cflg = 0, uflg = 0, tflg = 0, xflg = 0, jflg = 0, errflg = 0, r = 0;
 	char *filename = "primes.lst";
 	char *out_filename = NULL;
 	char chunk_name[MAX_CHUNK_NAME_LENGTH];
@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 
 	// #### argument parsing
 	// Boring `getopt` argument parsing.
-	while ((c = getopt(argc, argv, ":vsicux:t:b:l:o:")) != -1) {
+	while ((c = getopt(argc, argv, ":vsicujx:t:b:l:o:")) != -1) {
 		switch(c) {
 		case 'o':
 			out_filename = optarg;
@@ -48,6 +48,9 @@ int main(int argc, char **argv) {
 			break;
 		case 'u':
 			uflg++;
+			break;
+		case 'j':
+			jflg++;
 			break;
 		case 'c':
 			cflg++;
@@ -100,6 +103,7 @@ int main(int argc, char **argv) {
 						"\n\t-v        be more verbose"\
 						"\n\t-s        sort the input"\
 						"\n\t-u        count uniques"\
+						"\n\t-j        print json array"\
 						"\n\t-x bits   only output integers with size bits"\
 						"\n\t-t bits   tolerance in bits for -x"\
 						"\n\n");
@@ -107,7 +111,7 @@ int main(int argc, char **argv) {
 	}
 
 	// Default to inspect.
-	if (!sflg) {
+	if (!sflg && !jflg) {
 		iflg++;
 	}
 
@@ -182,6 +186,23 @@ int main(int argc, char **argv) {
 		mpz_clear(avg);
 		mpz_clear(sum_bits);
 
+	}
+
+	if (jflg > 0) {
+		printf("[\n");
+		if (lflg) {
+			j = length + seek;
+		} else {
+			j = s.used;
+		}
+		for(i=seek; i<j; i++) {
+			if (i == (j - 1)) {
+				gmp_printf("\"%Zu\"\n", s.array[i]);
+			} else {
+				gmp_printf("\"%Zu\",\n", s.array[i]);
+			}
+		}
+		printf("]\n");
 	}
 
 	if (out_filename != NULL) {
