@@ -47,11 +47,11 @@ if not conf.CheckCC():
 if not conf.CheckCHeader('gmp.h'):
 	print('Did not find gmp, exiting!')
 	Exit(1)
-	
+
 if not conf.CheckCHeader('unistd.h'):
 	print('Did not find POSIX unistd.h, exiting!')
 	Exit(1);
-	
+
 if not conf.CheckCHeader('openssl/rsa.h') or not conf.CheckCHeader('openssl/sha.h'):
 	print('WARNING: Did not find openssl!')
 	conf.env['CRYPTO'] = 0
@@ -74,7 +74,7 @@ env.Library('copri', ['copri.c'])
 if env['CRYPTO']:
 	env.Program('gen', ['gen.c'], LIBS = ['array', 'gmp', 'crypto'], CCFLAGS =['-Wno-deprecated-declarations'])
 
-if env['BUILD_TESTS']:	
+if env['BUILD_TESTS']:
 	prev_cmd = None
 	for name in [
 		'array',
@@ -102,10 +102,10 @@ if env['BUILD_TESTS']:
 			if env['VALGRIND']:
 				cmd = Command(rel+'_test', deps, 'valgrind -q --leak-check=full '+test[0].path)
 			else:
-				cmd = Command(rel+'_test', deps, test[0].path)			
+				cmd = Command(rel+'_test', deps, test[0].path)
 			AlwaysBuild(cmd)
 			prev_cmd = cmd
-	
+
 env.Program('app', ['app.c'])
 
 env.Program('app-merge', ['app-merge.c'])
@@ -115,6 +115,8 @@ env.Program('app-n2', ['app-n2.c'], LIBS = ['array', 'copri', 'gmp'])
 env.Program('array-util', ['array-util.c'], LIBS = ['array', 'gmp'])
 
 env.Program('balanced-split', ['balanced-split.c'], LIBS = ['array', 'gmp'])
+
+env.Program('filter-bad', ['filter-bad.c'], LIBS = ['array', 'gmp'])
 
 env.Program('csv2gmp', ['csv2gmp.c'], LIBS = ['gmp'])
 
@@ -139,11 +141,9 @@ env.AlwaysBuild(env.Command('config.h', 'config.h.in', config_h_build))
 
 if not GetOption('clean'):
 	import atexit
-	
+
 	if not env['CRYPTO']:
 		atexit.register(lambda: print('WARNING: OpenSSL is not installed!\n\t The \'gen\' util has not been build.'))
 
 	if not env['OMP']:
 		atexit.register(lambda: print('WARNING: No OpenMP compiler found!\n\t This build does not support multithreading.'))
-
-

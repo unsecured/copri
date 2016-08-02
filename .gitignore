@@ -9,6 +9,7 @@ app-merge
 app-n2
 csv2gmp
 array-util
+filter-bad
 test/test-cbmerge
 test/test-cbextend
 test/test-cb
