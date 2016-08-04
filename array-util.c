@@ -10,29 +10,30 @@
 #include <gmp.h>
 #include "copri.h"
 
-#define MAX_CHUNK_NAME_LENGTH 256
-
 // The generic `main` function.
 //
 // Define all variables at the beginning to make the C99 compiler
 // happy.
 int main(int argc, char **argv) {
-	mpz_array s, m, b, uniques, filtered;
+	mpz_array s, uniques, filtered, seekedLength, sample;
 	mpz_t sum_bits, avg;
-	size_t count, i, j, x, size, size_min = 0, size_max = 0;
-	int c, vflg = 0, iflg = 0, sflg = 0, lflg = 0, bflg = 0, cflg = 0, uflg = 0, tflg = 0, xflg = 0, jflg = 0, errflg = 0, r = 0;
+	size_t count, i, j, size, size_min = 0, size_max = 0;
+	int c, vflg = 0, iflg = 0, sflg = 0, lflg = 0, bflg = 0, rflg = 0, uflg = 0, tflg = 0, xflg = 0, jflg = 0, errflg = 0, r = 0;
 	char *filename = "primes.lst";
 	char *out_filename = NULL;
-	char chunk_name[MAX_CHUNK_NAME_LENGTH];
 	long int length = 0;
 	long int seek = 0;
 	long int tolerance = 0;
 	long int bitsize = 0;
-	unsigned int padding = 9;
+	// for random sampling
+	long int sample_size = 0;
+	gmp_randstate_t randstate;
+	mpz_t r_index;
+	mpz_t r_max;
 
 	// #### argument parsing
 	// Boring `getopt` argument parsing.
-	while ((c = getopt(argc, argv, ":vsicujx:t:b:l:o:")) != -1) {
+	while ((c = getopt(argc, argv, ":vsiujr:x:t:b:l:o:")) != -1) {
 		switch(c) {
 		case 'o':
 			out_filename = optarg;
@@ -52,8 +53,9 @@ int main(int argc, char **argv) {
 		case 'j':
 			jflg++;
 			break;
-		case 'c':
-			cflg++;
+		case 'r':
+			rflg++;
+			sample_size = strtol(optarg, NULL, 0);
 			break;
 		case 'x':
 			xflg++;
@@ -99,7 +101,7 @@ int main(int argc, char **argv) {
 						"\n\t-o FILE   the output file"\
 						"\n\t-l length max values to output or chunk size"\
 						"\n\t-b count  skip first count (seek)"\
-						"\n\t-c        create chunks"\
+						"\n\t-r length create random sample"\
 						"\n\t-v        be more verbose"\
 						"\n\t-s        sort the input"\
 						"\n\t-u        count uniques"\
@@ -111,7 +113,7 @@ int main(int argc, char **argv) {
 	}
 
 	// Default to inspect.
-	if (!sflg && !jflg) {
+	if (!sflg && !jflg && !rflg) {
 		iflg++;
 	}
 
@@ -131,9 +133,11 @@ int main(int argc, char **argv) {
 		return 3;
 	}
 
-	if (out_filename != NULL && vflg > 0 && !(cflg && lflg)) {
+	if (out_filename != NULL && vflg > 0 && !jflg) {
 		printf("output is going to be saved in '%s'\n", out_filename);
 	}
+
+	// # preprocessing functions
 
 	if (sflg > 0 || uflg > 0) {
 		if (vflg > 0)
@@ -141,17 +145,13 @@ int main(int argc, char **argv) {
 		array_msort(&s);
 	}
 
-	if (uflg > 0) {
-		array_init(&uniques, 10);
-		array_unique(&uniques, &s);
-		printf("unique: %zu / %zu\n", uniques.used, s.used);
-		array_clear(&uniques);
-	}
+	// # filter functions
 
+	// filter per bit size
 	if (xflg > 0) {
-		if (vflg > 0)
+		if (vflg > 0) {
 			printf("filter %zu integers by size %zu bits +/- %zu bits\n", s.used, bitsize, tolerance);
-
+		}
 		array_init(&filtered, 10);
 		for(i=0; i<s.used; i++) {
 			size = mpz_sizeinbase(s.array[i], 2);
@@ -159,10 +159,62 @@ int main(int argc, char **argv) {
 				array_add(&filtered, s.array[i]);
 			}
 		}
+		array_clear(&s);
 		s = filtered;
-
 	}
 
+	// create random sample
+	if (rflg > 0) {
+		if (s.used < sample_size) {
+			fprintf(stderr, "Sample size %zu is bigger then input size %zu\n", sample_size, s.used);
+			return 6;
+		}
+		if (sample_size <= 0) {
+			fprintf(stderr, "Sample size is %zu\n", sample_size);
+			return 6;
+		}
+		if (vflg > 0) {
+			printf("creating random sample of %zu from %zu integers\n", sample_size, s.used);
+		}
+		gmp_randinit_default(randstate);
+		mpz_init_set_ui(r_max, s.used);
+		mpz_init(r_index);
+		array_init(&sample, 10);
+		while(sample.used < sample_size) {
+			mpz_urandomm(r_index, randstate, r_max);
+			i = mpz_get_ui(r_index);
+			if (!array_contains(&sample, s.array[i])) {
+				array_add(&sample, s.array[i]);
+			}
+		}
+		gmp_randclear(randstate);
+		mpz_clear(r_index);
+		mpz_clear(r_max);
+		array_clear(&s);
+		s = sample;
+	}
+
+	// filter per seek and length
+	if (lflg || bflg) {
+		if (vflg > 0) {
+			printf("seeking to %zu and limiting to %zu integers\n", seek, length);
+		}
+		array_init(&seekedLength, 10);
+		j = 0;
+		for(i=seek; i<s.used; i++) {
+			if (lflg) {
+				if (j >= length) break;
+				j++;
+			}
+			array_add(&seekedLength, s.array[i]);
+		}
+		array_clear(&s);
+		s = seekedLength;
+	}
+
+	// # Output functions
+
+	// print info
 	if (iflg > 0) {
 		printf("count: %zu\n", s.used);
 		mpz_init_set_ui(sum_bits, 0);
@@ -188,15 +240,11 @@ int main(int argc, char **argv) {
 
 	}
 
+	// print JSON
 	if (jflg > 0) {
 		printf("[\n");
-		if (lflg) {
-			j = length + seek;
-		} else {
-			j = s.used;
-		}
-		for(i=seek; i<j; i++) {
-			if (i == (j - 1)) {
+		for(i=0; i<s.used; i++) {
+			if (i == (s.used - 1)) {
 				gmp_printf("\"%Zu\"\n", s.array[i]);
 			} else {
 				gmp_printf("\"%Zu\",\n", s.array[i]);
@@ -205,71 +253,22 @@ int main(int argc, char **argv) {
 		printf("]\n");
 	}
 
+	// print uniques
+	if (uflg > 0) {
+		array_init(&uniques, 10);
+		array_unique(&uniques, &s);
+		printf("unique: %zu / %zu\n", uniques.used, s.used);
+		array_clear(&uniques);
+	}
+
+	// save as file
 	if (out_filename != NULL) {
-		if (cflg && lflg) {
-			// generate the chunks
-			if (vflg > 0)
-				printf("creating chunks with prefix '%s' and size: %zu\n", out_filename, length);
-			b = s;
-			s = m;
-			array_init(&s, 10);
-			j = 0;
-			x = seek;
-
-			// get the padding size
-			padding = snprintf ( chunk_name, MAX_CHUNK_NAME_LENGTH, "%zu", b.used-seek);
-
-			for(i=seek; i<=b.used; i++) {
-				if (j >= length || i == b.used) {
-					if (snprintf ( chunk_name, MAX_CHUNK_NAME_LENGTH, "%s_%0*zu-%0*zu.lst", out_filename, padding, x, padding, (i-1)) < 0) {
-						fprintf(stderr, "Chunk name encoding error!\n");
-						return 5;
-					}
-					printf("writing chunk '%s'\n", chunk_name);
-
-					count = array_to_file(&s, chunk_name);
-					if (s.used != count) {
-						fprintf(stderr, "Array size and write count do not match\n");
-						return 4;
-					}
-
-					array_clear(&s);
-					array_init(&s, 10);
-
-					j = 0;
-					x = i;
-				}
-				if (i<b.used) {
-					array_add(&s, b.array[i]);
-					j++;
-				}
-			}
-			array_clear(&b);
-		} else {
-			// just process seek and length
-			if (vflg > 0)
-				printf("storing output in '%s'\n", out_filename);
-
-			if (lflg || bflg) {
-				b = s;
-				s = m;
-				array_init(&s, 10);
-				j = 0;
-				for(i=seek; i<b.used; i++) {
-					if (lflg) {
-						if (j >= length) break;
-						j++;
-					}
-					array_add(&s, b.array[i]);
-				}
-				array_clear(&b);
-			}
-
-			count = array_to_file(&s, out_filename);
-			if (s.used != count) {
-				fprintf(stderr, "Array size and write count do not match\n");
-				return 4;
-			}
+		if (vflg > 0)
+			printf("storing output in '%s'\n", out_filename);
+		count = array_to_file(&s, out_filename);
+		if (s.used != count) {
+			fprintf(stderr, "Array size and write count do not match\n");
+			return 4;
 		}
 	}
 
