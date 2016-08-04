@@ -30,6 +30,8 @@ int main(int argc, char **argv) {
 	gmp_randstate_t randstate;
 	mpz_t r_index;
 	mpz_t r_max;
+	size_t *used_indices;
+	int found = 0;
 
 	// #### argument parsing
 	// Boring `getopt` argument parsing.
@@ -180,13 +182,24 @@ int main(int argc, char **argv) {
 		mpz_init_set_ui(r_max, s.used);
 		mpz_init(r_index);
 		array_init(&sample, 10);
+		used_indices = (size_t *)malloc(sample_size * sizeof(size_t));
 		while(sample.used < sample_size) {
 			mpz_urandomm(r_index, randstate, r_max);
 			i = mpz_get_ui(r_index);
-			if (!array_contains(&sample, s.array[i])) {
+			found = 0;
+			for (j=0; j<sample.used; j++) {
+				if (used_indices[j] == i) {
+					found = 1;
+					break;
+				}
+			}
+			if (!found) {
+				printf("%zu\n", i);
+				used_indices[sample.used] = i;
 				array_add(&sample, s.array[i]);
 			}
 		}
+		free(used_indices);
 		gmp_randclear(randstate);
 		mpz_clear(r_index);
 		mpz_clear(r_max);
