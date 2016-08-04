@@ -194,7 +194,6 @@ int main(int argc, char **argv) {
 				}
 			}
 			if (!found) {
-				printf("%zu\n", i);
 				used_indices[sample.used] = i;
 				array_add(&sample, s.array[i]);
 			}
