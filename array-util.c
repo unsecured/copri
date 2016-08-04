@@ -196,6 +196,9 @@ int main(int argc, char **argv) {
 			if (!found) {
 				used_indices[sample.used] = i;
 				array_add(&sample, s.array[i]);
+				if (vflg > 0 && (sample.used % (sample_size / 10) == 0 || sample.used == sample_size)) {
+					printf("picked %zu of %zu random integers\n", sample.used, sample_size);
+				}
 			}
 		}
 		free(used_indices);
