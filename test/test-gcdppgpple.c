@@ -88,11 +88,11 @@ int main(int argc, char **argv) {
 
 	printf("Test 1                         ");
 	//     a = 3^2 * 7^3 * 13 = 40131
-	//     b = 2^5 * 3 * 7^2 * 11 = 51744
-	//     gcd(a,b) = 147
-	//     ppi = 3^2 * 7^3 = 3087
-	//     ppo = 3^2 * 7^3 * 13 = 13
-	test_evaluate(test_gcd_ppg_pple("40131", "51744", "147", "40131", "1"));
+	//     b = 2^5 * 3 * 7^3 * 11 = 362208
+	//     gcd(a,b) = 1029
+	//     ppg = 3^2 * 13 = 117
+	//     pple = 7^3 = 343
+	test_evaluate(test_gcd_ppg_pple("40131", "362208", "1029", "117", "343"));
 
 	test_end();
 }

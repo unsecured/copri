@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
 	//     b = 2^5 * 3 * 7^2 * 11 = 51744
 	//     gcd(a,b) = 147
 	//     ppi = 3^2 * 7^3 = 3087
-	//     ppo = 3^2 * 7^3 * 13 = 13
+	//     ppo = 13
 	test_evaluate(test_gcd_ppi_ppo("40131", "51744", "147", "3087", "13"));
 
 	test_end();

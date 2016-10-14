@@ -14,7 +14,7 @@ int tests_passed = 0;
 int tests_failed = 0;
 
 // **Test `test`**.
-static char * test() {
+static char * test1() {
 	mpz_array in, out, array_expect;
 	mpz_t b;
 	mpz_pool pool;
@@ -26,8 +26,9 @@ static char * test() {
 	array_init(&array_expect, 6);
 
 	mpz_init_set_str(b, "1", 0);
-	for (i=0;i<4;i++)
+	for (i=0;i<4;i++) {
 		array_add(&array_expect, b);
+	}
 
 	// primes: 139, 223, 317, 577, 727, 863
 	mpz_set_str(b, "139", 0);
@@ -58,6 +59,8 @@ static char * test() {
 		return "out and array_expect differ!";
 	}
 
+	array_print(&out);
+
 	array_clear(&in);
 	array_clear(&out);
 	array_clear(&array_expect);
@@ -74,7 +77,7 @@ int main(int argc, char **argv) {
 	printf("Starting split test\n");
 
 	printf("Test1                          ");
-	test_evaluate(test());
+	test_evaluate(test1());
 
 	test_end();
 }
